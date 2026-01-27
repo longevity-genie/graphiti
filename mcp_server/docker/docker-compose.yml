@@ -27,7 +27,7 @@ services:
       - falkordb_data:/var/lib/falkordb/data
       - mcp_logs:/var/log/graphiti
     ports:
-      - "6379:6379"  # FalkorDB/Redis
+      - "6380:6379"  # FalkorDB/Redis (changed from 6379)
       - "3000:3000"  # FalkorDB web UI
       - "8000:8000"  # MCP server HTTP
     healthcheck:

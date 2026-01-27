@@ -72,7 +72,7 @@ database:
   providers:
     falkordb:
       # Use environment variable if set, otherwise use Docker service hostname
-      uri: ${FALKORDB_URI:redis://falkordb:6379}
+      uri: ${FALKORDB_URI:redis://falkordb:6380}
       password: ${FALKORDB_PASSWORD:}
       database: ${FALKORDB_DATABASE:default_db}
 

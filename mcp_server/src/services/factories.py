@@ -70,6 +70,16 @@ try:
     HAS_GROQ = True
 except ImportError:
     HAS_GROQ = False
+
+try:
+    from graphiti_core.cross_encoder.gemini_reranker_client import GeminiRerankerClient
+
+    HAS_GEMINI_RERANKER = True
+except ImportError:
+    HAS_GEMINI_RERANKER = False
+
+from graphiti_core.cross_encoder import CrossEncoderClient
+from graphiti_core.cross_encoder.openai_reranker_client import OpenAIRerankerClient
 from utils.utils import create_azure_credential_token_provider
 
 
@@ -329,10 +339,20 @@ class EmbedderFactory:
 
                 from graphiti_core.embedder.gemini import GeminiEmbedderConfig
 
+                # Use Gemini default if model is unset or still using OpenAI default
+                embedding_model = config.model
+                if not embedding_model or embedding_model == 'text-embedding-3-small':
+                    embedding_model = 'gemini-embedding-001'
+
+                # Use appropriate dimensions for Gemini (default 768)
+                dimensions = config.dimensions
+                if not dimensions or dimensions == 1536:  # 1536 is OpenAI default
+                    dimensions = 768
+
                 gemini_config = GeminiEmbedderConfig(
                     api_key=api_key,
-                    embedding_model=config.model or 'models/text-embedding-004',
-                    embedding_dim=config.dimensions or 768,
+                    embedding_model=embedding_model,
+                    embedding_dim=dimensions,
                 )
                 return GeminiEmbedder(config=gemini_config)
 
@@ -349,10 +369,20 @@ class EmbedderFactory:
 
                 from graphiti_core.embedder.voyage import VoyageAIEmbedderConfig
 
+                # Use Voyage default if model is unset or still using OpenAI default
+                embedding_model = config.model
+                if not embedding_model or embedding_model == 'text-embedding-3-small':
+                    embedding_model = 'voyage-3'
+
+                # Use appropriate dimensions for Voyage (default 1024)
+                dimensions = config.dimensions
+                if not dimensions or dimensions == 1536:  # 1536 is OpenAI default
+                    dimensions = 1024
+
                 voyage_config = VoyageAIEmbedderConfig(
                     api_key=api_key,
-                    embedding_model=config.model or 'voyage-3',
-                    embedding_dim=config.dimensions or 1024,
+                    embedding_model=embedding_model,
+                    embedding_dim=dimensions,
                 )
                 return VoyageAIEmbedder(config=voyage_config)
 
@@ -423,7 +453,7 @@ class DatabaseDriverFactory:
                 # Parse the URI to extract host and port
                 parsed = urlparse(uri)
                 host = parsed.hostname or 'localhost'
-                port = parsed.port or 6379
+                port = parsed.port or 6380
 
                 return {
                     'driver': 'falkordb',
@@ -435,3 +465,101 @@ class DatabaseDriverFactory:
 
             case _:
                 raise ValueError(f'Unsupported Database provider: {provider}')
+
+
+class CrossEncoderFactory:
+    """Factory for creating CrossEncoder/Reranker clients based on LLM configuration."""
+
+    @staticmethod
+    def create(config: LLMConfig) -> CrossEncoderClient:
+        """Create a CrossEncoder client based on the configured LLM provider.
+
+        The cross-encoder/reranker should match the LLM provider to avoid
+        requiring multiple API keys.
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        provider = config.provider.lower()
+
+        match provider:
+            case 'gemini':
+                if not HAS_GEMINI_RERANKER:
+                    raise ValueError(
+                        'Gemini reranker not available in current graphiti-core version'
+                    )
+                if not config.providers.gemini:
+                    raise ValueError('Gemini provider configuration not found')
+
+                api_key = config.providers.gemini.api_key
+                _validate_api_key('Gemini Reranker', api_key, logger)
+
+                reranker_config = GraphitiLLMConfig(
+                    api_key=api_key,
+                    model='gemini-2.5-flash-lite',  # Use lite model for reranking
+                )
+                return GeminiRerankerClient(config=reranker_config)
+
+            case 'openai':
+                if not config.providers.openai:
+                    raise ValueError('OpenAI provider configuration not found')
+
+                api_key = config.providers.openai.api_key
+                _validate_api_key('OpenAI Reranker', api_key, logger)
+
+                reranker_config = GraphitiLLMConfig(
+                    api_key=api_key,
+                    model='gpt-4.1-nano',  # Use small model for reranking
+                )
+                return OpenAIRerankerClient(config=reranker_config)
+
+            case 'azure_openai':
+                if not config.providers.azure_openai:
+                    raise ValueError('Azure OpenAI provider configuration not found')
+                azure_config = config.providers.azure_openai
+
+                if not azure_config.api_url:
+                    raise ValueError('Azure OpenAI API URL is required')
+
+                api_key: str | None = None
+                azure_ad_token_provider = None
+                if azure_config.use_azure_ad:
+                    logger.info('Creating Azure OpenAI Reranker with Azure AD authentication')
+                    azure_ad_token_provider = create_azure_credential_token_provider()
+                else:
+                    api_key = azure_config.api_key
+                    _validate_api_key('Azure OpenAI Reranker', api_key, logger)
+
+                azure_client = AsyncAzureOpenAI(
+                    api_key=api_key,
+                    azure_endpoint=azure_config.api_url,
+                    api_version=azure_config.api_version,
+                    azure_deployment=azure_config.deployment_name,
+                    azure_ad_token_provider=azure_ad_token_provider,
+                )
+
+                reranker_config = GraphitiLLMConfig(
+                    api_key=api_key,
+                    model=config.model,
+                )
+                return OpenAIRerankerClient(config=reranker_config, client=azure_client)
+
+            case _:
+                # For other providers (anthropic, groq), fall back to OpenAI reranker
+                # if OpenAI config is available, otherwise raise error
+                if config.providers.openai and config.providers.openai.api_key:
+                    api_key = config.providers.openai.api_key
+                    logger.info(
+                        f'Using OpenAI reranker as fallback for {provider} LLM provider'
+                    )
+                    reranker_config = GraphitiLLMConfig(
+                        api_key=api_key,
+                        model='gpt-4.1-nano',
+                    )
+                    return OpenAIRerankerClient(config=reranker_config)
+                else:
+                    raise ValueError(
+                        f'No reranker available for {provider}. '
+                        f'Either use Gemini/OpenAI as LLM provider, or set OPENAI_API_KEY for reranking.'
+                    )

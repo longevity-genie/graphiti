@@ -186,7 +186,7 @@ class Neo4jProviderConfig(BaseModel):
 class FalkorDBProviderConfig(BaseModel):
     """FalkorDB provider configuration."""
 
-    uri: str = 'redis://localhost:6379'
+    uri: str = 'redis://localhost:6380'
     password: str | None = None
     database: str = 'default_db'
 

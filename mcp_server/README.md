@@ -121,7 +121,7 @@ database:
   provider: "falkordb"  # Default
   providers:
     falkordb:
-      uri: "redis://localhost:6379"
+      uri: "redis://localhost:6380"
       password: ""  # Optional
       database: "default_db"  # Optional
 ```
@@ -150,7 +150,7 @@ database:
   provider: "falkordb"
   providers:
     falkordb:
-      uri: "redis://localhost:6379"
+      uri: "redis://localhost:6380"
       password: ""  # Optional
       database: "default_db"  # Optional
 ```
@@ -253,8 +253,8 @@ docker compose up
 
 This starts a single container with:
 - HTTP transport on `http://localhost:8000/mcp/`
-- FalkorDB graph database on `localhost:6379`
-- FalkorDB web UI on `http://localhost:3000`
+- FalkorDB graph database on `localhost:6380`
+- FalkorDB web UI on `http://localhost:3001`
 - OpenAI LLM with gpt-5-mini model
 
 ### Running with Neo4j
@@ -301,7 +301,7 @@ docker compose -f docker/docker-compose.falkordb.yaml up
 
 ```bash
 # Set environment variables
-export FALKORDB_URI="redis://localhost:6379"
+export FALKORDB_URI="redis://localhost:6380"
 export FALKORDB_PASSWORD=""  # If password protected
 
 # Run with FalkorDB
@@ -440,9 +440,9 @@ docker compose -f docker/docker-compose-falkordb.yml up
 ```
 
 FalkorDB configuration:
-- Redis port: `6379`
-- Web UI: `http://localhost:3000`
-- Connection: `redis://falkordb:6379`
+- Redis port: `6380`
+- Web UI: `http://localhost:3001`
+- Connection: `redis://falkordb:6380`
 
 #### Accessing the MCP Server
 

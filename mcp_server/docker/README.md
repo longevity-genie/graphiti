@@ -39,15 +39,15 @@ The default configuration uses a combined Docker image that bundles both FalkorD
 
 ```bash
 # Environment variables
-FALKORDB_URI=redis://localhost:6379  # Connection URI (services run in same container)
+FALKORDB_URI=redis://localhost:6380  # Connection URI (services run in same container)
 FALKORDB_PASSWORD=  # Password (default: empty)
 FALKORDB_DATABASE=default_db  # Database name (default: default_db)
 ```
 
 #### Accessing Services
 
-- **FalkorDB (Redis):** redis://localhost:6379
-- **FalkorDB Web UI:** http://localhost:3000
+- **FalkorDB (Redis):** redis://localhost:6380
+- **FalkorDB Web UI:** http://localhost:3001
 - **MCP Server:** http://localhost:8000
 
 #### Data Management

@@ -1,0 +1,29 @@
+# FalkorDB standalone configuration for local MCP server development
+# Run with: docker compose -f docker-compose-falkordb-local.yml up -d
+#
+# This starts FalkorDB with password protection.
+# The MCP server runs locally via: uv run python main.py --transport http
+
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: graphiti-falkordb
+    ports:
+      - "6380:6379"   # Redis/FalkorDB port (changed from 6379 as it was busy)
+      - "3001:3000"   # FalkorDB Browser UI (internal 3000 -> external 3001)
+    environment:
+      - REDIS_ARGS=--requirepass ${FALKORDB_PASSWORD:-InOpenSourceWeTrust!}
+      - BROWSER=${BROWSER:-1}
+    volumes:
+      - falkordb_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "-a", "${FALKORDB_PASSWORD:-InOpenSourceWeTrust!}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  falkordb_data:
+    driver: local

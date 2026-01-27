@@ -31,7 +31,7 @@ from models.response_types import (
     StatusResponse,
     SuccessResponse,
 )
-from services.factories import DatabaseDriverFactory, EmbedderFactory, LLMClientFactory
+from services.factories import CrossEncoderFactory, DatabaseDriverFactory, EmbedderFactory, LLMClientFactory
 from services.queue_service import QueueService
 from utils.formatting import format_fact_result
 
@@ -174,6 +174,7 @@ class GraphitiService:
             # Create clients using factories
             llm_client = None
             embedder_client = None
+            cross_encoder_client = None
 
             # Create LLM client based on configured provider
             try:
@@ -186,6 +187,12 @@ class GraphitiService:
                 embedder_client = EmbedderFactory.create(self.config.embedder)
             except Exception as e:
                 logger.warning(f'Failed to create embedder client: {e}')
+
+            # Create cross-encoder/reranker client based on LLM provider
+            try:
+                cross_encoder_client = CrossEncoderFactory.create(self.config.llm)
+            except Exception as e:
+                logger.warning(f'Failed to create cross-encoder client: {e}')
 
             # Get database configuration
             db_config = DatabaseDriverFactory.create_config(self.config.database)
@@ -226,6 +233,7 @@ class GraphitiService:
                         graph_driver=falkor_driver,
                         llm_client=llm_client,
                         embedder=embedder_client,
+                        cross_encoder=cross_encoder_client,
                         max_coroutines=self.semaphore_limit,
                     )
                 else:
@@ -236,6 +244,7 @@ class GraphitiService:
                         password=db_config['password'],
                         llm_client=llm_client,
                         embedder=embedder_client,
+                        cross_encoder=cross_encoder_client,
                         max_coroutines=self.semaphore_limit,
                     )
             except Exception as db_error:
@@ -251,7 +260,7 @@ class GraphitiService:
                             f'FalkorDB at {db_config["host"]}:{db_config["port"]} is not accessible.\n\n'
                             f'To start FalkorDB:\n'
                             f'  - Using Docker Compose: cd mcp_server && docker compose up\n'
-                            f'  - Or run FalkorDB manually: docker run -p 6379:6379 falkordb/falkordb\n\n'
+                            f'  - Or run FalkorDB manually: docker run -p 6380:6379 falkordb/falkordb\n\n'
                             f'{"=" * 70}\n'
                         ) from db_error
                     elif db_provider.lower() == 'neo4j':
@@ -295,6 +304,11 @@ class GraphitiService:
                 logger.info(f'Using Embedder provider: {self.config.embedder.provider}')
             else:
                 logger.info('No Embedder client configured - search will be limited')
+
+            if cross_encoder_client:
+                logger.info(f'Using CrossEncoder/Reranker provider: {self.config.llm.provider}')
+            else:
+                logger.info('No CrossEncoder client configured - reranking will be limited')
 
             if self.entity_types:
                 entity_type_names = list(self.entity_types.keys())

@@ -5,8 +5,8 @@ This Docker setup bundles FalkorDB (graph database) and the Graphiti MCP Server 
 ## Overview
 
 The combined image extends the official FalkorDB Docker image to include:
-- **FalkorDB**: Redis-based graph database running on port 6379
-- **FalkorDB Web UI**: Graph visualization interface on port 3000
+- **FalkorDB**: Redis-based graph database running on port 6380
+- **FalkorDB Web UI**: Graph visualization interface on port 3001
 - **Graphiti MCP Server**: Knowledge graph API on port 8000
 
 Both services are managed by a startup script that launches FalkorDB as a daemon and the MCP server in the foreground.
@@ -36,15 +36,15 @@ docker compose -f docker/docker-compose-falkordb-combined.yml up
 
 3. Access the services:
    - MCP Server: http://localhost:8000/mcp/
-   - FalkorDB Web UI: http://localhost:3000
-   - FalkorDB (Redis): localhost:6379
+   - FalkorDB Web UI: http://localhost:3001
+   - FalkorDB (Redis): localhost:6380
 
 ### Using Docker Run
 
 ```bash
 docker run -d \
-  -p 6379:6379 \
-  -p 3000:3000 \
+  -p 6380:6380 \
+  -p 3001:3001 \
   -p 8000:8000 \
   -e OPENAI_API_KEY=your_key \
   -e GRAPHITI_GROUP_ID=main \
@@ -83,7 +83,7 @@ All environment variables from the standard MCP server are supported:
 - `OPENAI_API_KEY`: OpenAI API key for LLM operations
 
 **Optional:**
-- `BROWSER`: Enable FalkorDB Browser web UI on port 3000 (default: "1", set to "0" to disable)
+- `BROWSER`: Enable FalkorDB Browser web UI on port 3001 (default: "1", set to "0" to disable)
 - `GRAPHITI_GROUP_ID`: Namespace for graph data (default: "main")
 - `SEMAPHORE_LIMIT`: Concurrency limit for episode processing (default: 10)
 - `FALKORDB_PASSWORD`: Password for FalkorDB (optional)
@@ -126,13 +126,13 @@ curl http://localhost:8000/health
 
 ### Disabling the FalkorDB Browser
 
-To disable the FalkorDB Browser web UI (port 3000), set the `BROWSER` environment variable to `0`:
+To disable the FalkorDB Browser web UI (port 3001), set the `BROWSER` environment variable to `0`:
 
 ```bash
 # Using docker run
 docker run -d \
-  -p 6379:6379 \
-  -p 3000:3000 \
+  -p 6380:6380 \
+  -p 3001:3001 \
   -p 8000:8000 \
   -e BROWSER=0 \
   -e OPENAI_API_KEY=your_key \
@@ -143,7 +143,7 @@ docker run -d \
 BROWSER=0
 ```
 
-When disabled, only FalkorDB (port 6379) and the MCP server (port 8000) will run.
+When disabled, only FalkorDB (port 6380) and the MCP server (port 8000) will run.
 
 ## Health Checks
 
@@ -219,12 +219,12 @@ docker compose -f docker/docker-compose-falkordb-combined.yml logs -f
 
 ### Port Conflicts
 
-If ports 6379, 3000, or 8000 are already in use, modify the port mappings in `docker-compose-falkordb-combined.yml`:
+If ports 6380, 3001, or 8000 are already in use, modify the port mappings in `docker-compose-falkordb-combined.yml`:
 
 ```yaml
 ports:
-  - "16379:6379"  # Use different external port
-  - "13000:3000"
+  - "16380:6380"  # Use different external port
+  - "13001:3001"
   - "18000:8000"
 ```
 
