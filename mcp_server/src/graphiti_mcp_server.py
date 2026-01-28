@@ -238,6 +238,9 @@ class GraphitiService:
             # Build edge types from configuration
             custom_edge_types = None
             edge_type_map: dict[tuple[str, str], list[str]] = {}
+            logger.info(
+                f'Edge types in config: {len(self.config.graphiti.edge_types) if self.config.graphiti.edge_types else 0}'
+            )
             if self.config.graphiti.edge_types:
                 custom_edge_types = {}
                 for edge_type in self.config.graphiti.edge_types:
@@ -385,6 +388,10 @@ class GraphitiService:
                     f'Using custom edge types ({len(edge_type_names)}): {", ".join(edge_type_names[:10])}{"..." if len(edge_type_names) > 10 else ""}'
                 )
             else:
+                logger.warning(
+                    'No custom edge types configured - will use default RELATES_TO edge type'
+                )
+            else:
                 logger.info('Using default edge types (LLM-inferred)')
 
             logger.info(f'Using database: {self.config.database.provider}')
@@ -470,6 +477,11 @@ async def add_memory(
                 episode_type = EpisodeType.text
 
         # Submit to queue service for async processing
+        edge_types_count = len(graphiti_service.edge_types) if graphiti_service.edge_types else 0
+        logger.debug(
+            f'Adding episode with {edge_types_count} edge types, '
+            f'edge_type_map keys: {list(graphiti_service.edge_type_map.keys()) if graphiti_service.edge_type_map else "None"}'
+        )
         await queue_service.add_episode(
             group_id=effective_group_id,
             name=name,
