@@ -357,6 +357,11 @@ class FalkorDriver(GraphDriver):
         if len(sanitized_query.split(' ')) + len(group_ids or '') >= max_query_length:
             return ''
 
+        # If sanitized query is empty after filtering, return empty string to skip fulltext search
+        # An empty query like "(@group_id:main) ()" causes RediSearch syntax errors
+        if not sanitized_query.strip():
+            return ''
+
         full_query = group_filter + ' (' + sanitized_query + ')'
 
         return full_query

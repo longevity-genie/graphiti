@@ -168,7 +168,9 @@ class GraphitiService:
         self.semaphore_limit = semaphore_limit
         self.semaphore = asyncio.Semaphore(semaphore_limit)
         self.client: Graphiti | None = None
-        self.entity_types = None
+        self.entity_types: dict[str, type[BaseModel]] | None = None
+        self.edge_types: dict[str, type[BaseModel]] | None = None
+        self.edge_type_map: dict[tuple[str, str], list[str]] | None = None
 
     async def initialize(self) -> None:
         """Initialize the Graphiti client with factory-created components."""
@@ -217,6 +219,42 @@ class GraphitiService:
 
             # Store entity types for later use
             self.entity_types = custom_types
+
+            # Build edge types from configuration
+            custom_edge_types = None
+            edge_type_map: dict[tuple[str, str], list[str]] = {}
+            if self.config.graphiti.edge_types:
+                custom_edge_types = {}
+                for edge_type in self.config.graphiti.edge_types:
+                    # Create a dynamic Pydantic model for each edge type
+                    edge_model = type(
+                        edge_type.name,
+                        (BaseModel,),
+                        {
+                            '__doc__': edge_type.description,
+                        },
+                    )
+                    custom_edge_types[edge_type.name] = edge_model
+
+                    # Build edge_type_map based on source/target type constraints
+                    if edge_type.source_types and edge_type.target_types:
+                        # Specific constraints provided
+                        for source_type in edge_type.source_types:
+                            for target_type in edge_type.target_types:
+                                key = (source_type, target_type)
+                                if key not in edge_type_map:
+                                    edge_type_map[key] = []
+                                edge_type_map[key].append(edge_type.name)
+                    else:
+                        # No constraints - edge can connect any entities
+                        key = ('Entity', 'Entity')
+                        if key not in edge_type_map:
+                            edge_type_map[key] = []
+                        edge_type_map[key].append(edge_type.name)
+
+            # Store edge types for later use
+            self.edge_types = custom_edge_types
+            self.edge_type_map = edge_type_map if edge_type_map else None
 
             # Initialize Graphiti client with appropriate driver
             try:
@@ -314,9 +352,15 @@ class GraphitiService:
 
             if self.entity_types:
                 entity_type_names = list(self.entity_types.keys())
-                logger.info(f'Using custom entity types: {", ".join(entity_type_names)}')
+                logger.info(f'Using custom entity types ({len(entity_type_names)}): {", ".join(entity_type_names[:10])}{"..." if len(entity_type_names) > 10 else ""}')
             else:
                 logger.info('Using default entity types')
+
+            if self.edge_types:
+                edge_type_names = list(self.edge_types.keys())
+                logger.info(f'Using custom edge types ({len(edge_type_names)}): {", ".join(edge_type_names[:10])}{"..." if len(edge_type_names) > 10 else ""}')
+            else:
+                logger.info('Using default edge types (LLM-inferred)')
 
             logger.info(f'Using database: {self.config.database.provider}')
             logger.info(f'Using group_id: {self.config.graphiti.group_id}')
@@ -409,6 +453,9 @@ async def add_memory(
             episode_type=episode_type,
             entity_types=graphiti_service.entity_types,
             uuid=uuid or None,  # Ensure None is passed if uuid is None
+            edge_types=graphiti_service.edge_types,
+            edge_type_map=graphiti_service.edge_type_map,
+            custom_extraction_instructions=graphiti_service.config.graphiti.custom_extraction_instructions,
         )
 
         return SuccessResponse(

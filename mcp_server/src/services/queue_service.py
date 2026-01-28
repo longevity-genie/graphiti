@@ -107,6 +107,9 @@ class QueueService:
         episode_type: Any,
         entity_types: Any,
         uuid: str | None,
+        edge_types: Any = None,
+        edge_type_map: Any = None,
+        custom_extraction_instructions: str | None = None,
     ) -> int:
         """Add an episode for processing.
 
@@ -118,6 +121,9 @@ class QueueService:
             episode_type: Type of the episode
             entity_types: Entity types for extraction
             uuid: Episode UUID
+            edge_types: Edge/relationship types for extraction
+            edge_type_map: Mapping of (source_type, target_type) to allowed edge types
+            custom_extraction_instructions: Optional extra instructions to reduce ambiguity
 
         Returns:
             The position in the queue
@@ -140,6 +146,9 @@ class QueueService:
                     reference_time=datetime.now(timezone.utc),
                     entity_types=entity_types,
                     uuid=uuid,
+                    edge_types=edge_types,
+                    edge_type_map=edge_type_map,
+                    custom_extraction_instructions=custom_extraction_instructions,
                 )
 
                 logger.info(f'Successfully processed episode {uuid} for group {group_id}')

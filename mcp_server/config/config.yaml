@@ -90,22 +90,724 @@ graphiti:
   group_id: ${GRAPHITI_GROUP_ID:main}
   episode_id_prefix: ${EPISODE_ID_PREFIX:}
   user_id: ${USER_ID:mcp_user}
+  
+  # Strong guidance to keep entity/edge classification consistent.
+  # This is injected into Graphiti's extraction prompts.
+  custom_extraction_instructions: |
+    # CANONICAL TYPES ONLY
+    - For ENTITIES: prefer the configured entity_types. If unsure, use CustomEntity and put the specific subtype in the entity attributes/text.
+    - Do NOT invent new entity labels that are not in entity_types.
+
+    # CANONICAL RELATIONS ONLY
+    - For EDGES: always choose the best match from the provided FACT TYPES (edge_types).
+    - Do NOT invent new relation_type names if a close canonical option exists.
+    - If nothing fits, use CUSTOM_RELATION.
+
+    # AVOID SYNONYM FRAGMENTATION (examples)
+    - Use ASSOCIATED_WITH for correlation/association. Do NOT use CORRELATES_WITH / WEAKLY_ASSOCIATED / STRONGLY_ASSOCIATED.
+    - Use CAUSES / MAY_CAUSE / LEADS_TO / CONTRIBUTES_TO for causality. Prefer one that matches the strength stated.
+    - Use SUPPORTS / PARTIALLY_SUPPORTS / CONTRADICTS / DISPUTED / ESTABLISHED for evidence stance and certainty.
+    - Put p-values, effect sizes, confidence, and caveats into the fact text (or the episode content) rather than creating new edge types.
+
+    # SCIENTIFIC WRITING / LITERATURE
+    - When extracting from papers, connect Publication -> REPORTS -> ScientificClaim/Observation when possible.
+    - Prefer CITES, AUTHORED_BY, PUBLISHED_IN for bibliographic relations.
+  
+  # Entity Types for Biomedical Research, ML/AI, and Collaborative Scientific Work
+  # Domains: fibrosis, aging, glucose metabolism, genetics, ML predictive models, AI-assisted writing
+  # Design principle: Flexibility via CustomEntity catch-all + domain-specific types
   entity_types:
-    - name: "Preference"
-      description: "User preferences, choices, opinions, or selections (PRIORITIZE over most other types except User/Assistant)"
-    - name: "Requirement"
-      description: "Specific needs, features, or functionality that must be fulfilled"
-    - name: "Procedure"
-      description: "Standard operating procedures and sequential instructions"
-    - name: "Location"
-      description: "Physical or virtual places where activities occur"
-    - name: "Event"
-      description: "Time-bound activities, occurrences, or experiences"
+  
+    # ══════════════════════════════════════════════════════════════════════════════
+    # MOLECULAR & GENETIC ENTITIES
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Gene"
+      description: "Genes, genetic loci (e.g., TGFB1, INS, GCK, FOXO3, APOE, CDKN2A, telomere-related genes)"
+    - name: "GeneticVariant"
+      description: "SNPs, mutations, polymorphisms (e.g., rs123456, APOE-e4, pathogenic variants with clinical significance)"
+    - name: "Protein"
+      description: "Proteins, enzymes, receptors (e.g., TGF-beta, insulin, GLUT4, collagens, sirtuins, AMPK)"
+    - name: "SignalingPathway"
+      description: "Biological pathways (e.g., TGF-beta/SMAD, insulin signaling, mTOR, AMPK, Wnt, NF-kB, SASP)"
+    - name: "MolecularMechanism"
+      description: "Molecular processes (e.g., glycation, ECM remodeling, cellular senescence, autophagy, insulin resistance)"
+    - name: "Biomarker"
+      description: "Diagnostic/prognostic markers (e.g., HbA1c, GlycanAge, epigenetic clocks, inflammatory markers)"
+    - name: "Metabolite"
+      description: "Metabolic compounds (e.g., glucose, lactate, ketones, AGEs, lipids, amino acids)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # CELLULAR & AGING ENTITIES
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "CellType"
+      description: "Cell types (e.g., fibroblasts, beta cells, adipocytes, macrophages, senescent cells, stem cells)"
+    - name: "CellularProcess"
+      description: "Cellular processes (e.g., senescence, apoptosis, autophagy, EMT, insulin secretion, glucose uptake)"
+    - name: "AgingHallmark"
+      description: "Hallmarks of aging (e.g., cellular senescence, mitochondrial dysfunction, epigenetic alterations, nutrient sensing)"
+    - name: "AgingIntervention"
+      description: "Longevity interventions (e.g., caloric restriction, senolytics, metformin, NAD+ precursors, rapamycin)"
+    - name: "AgingClock"
+      description: "Biological age estimators (e.g., Horvath clock, GrimAge, PhenoAge, telomere length, GlycanAge)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # CHEMICAL & PHARMACEUTICAL
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Drug"
+      description: "Pharmaceuticals (e.g., metformin, pirfenidone, GLP-1 agonists, SGLT2 inhibitors, senolytics)"
+    - name: "Chemical"
+      description: "Chemical compounds (e.g., cytokines, ROS, AGEs, growth factors, nutraceuticals)"
+    - name: "DrugTarget"
+      description: "Drug targets (e.g., mTOR, AMPK, DPP-4, TGF-beta receptor, senescent cell markers)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # DISEASE & CLINICAL
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Disease"
+      description: "Diseases (e.g., diabetes, fibrosis, metabolic syndrome, sarcopenia, frailty, age-related diseases)"
+    - name: "Phenotype"
+      description: "Observable traits (e.g., insulin resistance, glucose tolerance, body composition, functional capacity)"
+    - name: "Symptom"
+      description: "Clinical symptoms (e.g., hyperglycemia, fatigue, stiffness, cognitive decline)"
+    - name: "ClinicalMeasurement"
+      description: "Clinical measurements (e.g., fasting glucose, HOMA-IR, HbA1c, CGM data, grip strength, VO2max)"
+    - name: "Treatment"
+      description: "Therapeutic interventions (e.g., insulin therapy, lifestyle interventions, antifibrotic therapy)"
+    - name: "ClinicalTrial"
+      description: "Clinical studies (NCT numbers, phase, endpoints, inclusion criteria, outcomes)"
+    - name: "Cohort"
+      description: "Study cohorts and populations (e.g., UK Biobank, Framingham, NHANES, with demographics)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # ANATOMICAL
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "AnatomicalStructure"
+      description: "Anatomical structures (e.g., pancreas, liver, muscle, adipose tissue, joint, vasculature)"
+    - name: "Tissue"
+      description: "Tissue types (e.g., connective tissue, islets of Langerhans, ECM, scar tissue)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # GENETICS & OMICS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "GWAS"
+      description: "Genome-wide association studies (trait, significant loci, sample size, populations)"
+    - name: "PolygenicScore"
+      description: "Polygenic risk scores (e.g., T2D PRS, longevity PRS, with predictive performance)"
+    - name: "GeneExpression"
+      description: "Gene expression patterns (e.g., differentially expressed genes, expression signatures)"
+    - name: "EpigeneticMark"
+      description: "Epigenetic modifications (e.g., DNA methylation sites, histone marks, CpG islands)"
+    - name: "OmicsDataType"
+      description: "Omics data types (e.g., transcriptomics, proteomics, metabolomics, epigenomics, glycomics)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # ML/AI & PREDICTIVE MODELING
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "MLModel"
+      description: "Machine learning models (e.g., XGBoost glucose predictor, LSTM time-series, transformer models)"
+    - name: "MLAlgorithm"
+      description: "ML algorithms (e.g., random forest, neural networks, gradient boosting, survival models)"
+    - name: "ModelFeature"
+      description: "Input features for models (e.g., CGM readings, meal timing, activity data, genetic variants)"
+    - name: "ModelMetric"
+      description: "Performance metrics (e.g., RMSE, AUC-ROC, time-in-range, calibration, SHAP values)"
+    - name: "TrainingDataset"
+      description: "ML training datasets (size, features, labels, preprocessing, train/test splits)"
+    - name: "Prediction"
+      description: "Model predictions (e.g., glucose forecast, disease risk, biological age prediction)"
+    - name: "MLPipeline"
+      description: "ML pipelines and workflows (preprocessing, training, validation, deployment)"
+    - name: "Hyperparameter"
+      description: "Model hyperparameters (e.g., learning rate, regularization, architecture choices)"
+    - name: "MLExperiment"
+      description: "ML experiments (hypothesis, setup, results, comparisons, ablations)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # AI MODELS & ARCHITECTURES
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "LLM"
+      description: "Large language models (e.g., GPT-4, Claude-3.5, Gemini-2, Llama-3, with context length, capabilities)"
+    - name: "EmbeddingModel"
+      description: "Embedding models (e.g., text-embedding-3, Voyage, BGE, with dimensions, use cases)"
+    - name: "VisionModel"
+      description: "Vision and multimodal models (e.g., GPT-4V, Claude Vision, for image/document analysis)"
+    - name: "SpecializedModel"
+      description: "Domain-specific models (e.g., BioGPT, PubMedBERT, ESM for proteins, AlphaFold)"
+    - name: "ModelProvider"
+      description: "AI model providers (e.g., OpenAI, Anthropic, Google, Meta, Mistral, with pricing, limits)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # AGENTIC AI & ORCHESTRATION
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "AIAgent"
+      description: "AI agents (autonomous systems with goals, e.g., research agent, coding agent, with capabilities)"
+    - name: "AgentFramework"
+      description: "Agent frameworks (e.g., LangChain, LangGraph, CrewAI, AutoGen, smolagents, with patterns)"
+    - name: "AgentTool"
+      description: "Tools available to agents (e.g., web search, code execution, file operations, API calls)"
+    - name: "AgentMemory"
+      description: "Agent memory systems (e.g., Graphiti, Mem0, conversation history, episodic/semantic memory)"
+    - name: "AgentWorkflow"
+      description: "Agent workflows and pipelines (multi-step processes, task decomposition, orchestration)"
+    - name: "AgentCapability"
+      description: "Agent capabilities (e.g., reasoning, planning, tool use, reflection, self-correction)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # RAG & KNOWLEDGE SYSTEMS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "RAGSystem"
+      description: "RAG implementations (retrieval-augmented generation systems, with retrieval strategy)"
+    - name: "VectorStore"
+      description: "Vector databases (e.g., Pinecone, Weaviate, Qdrant, Chroma, pgvector, FAISS)"
+    - name: "KnowledgeGraph"
+      description: "Knowledge graphs (e.g., Neo4j, FalkorDB, with schema, entity types, relationships)"
+    - name: "GraphRAG"
+      description: "Graph-based RAG (combining knowledge graphs with retrieval, e.g., Graphiti, Microsoft GraphRAG)"
+    - name: "Chunking"
+      description: "Text chunking strategies (e.g., semantic chunking, recursive splitting, with chunk sizes)"
+    - name: "RetrievalMethod"
+      description: "Retrieval methods (e.g., semantic search, hybrid search, reranking, BM25, with parameters)"
+    - name: "IndexingStrategy"
+      description: "Indexing strategies (e.g., hierarchical, parent-child, hypothetical questions, RAPTOR)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # MCP & INTEGRATION PROTOCOLS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "MCPServer"
+      description: "MCP servers (Model Context Protocol servers, with tools, resources, capabilities)"
+    - name: "MCPTool"
+      description: "MCP tools (functions exposed via MCP, with parameters, return types, use cases)"
+    - name: "MCPResource"
+      description: "MCP resources (data exposed via MCP, with URI patterns, content types)"
+    - name: "MCPClient"
+      description: "MCP clients (e.g., Claude Desktop, Cursor, Zed, custom clients)"
+    - name: "IntegrationProtocol"
+      description: "Integration protocols (e.g., MCP, OpenAI function calling, tool use, A2A protocol)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # PROMPTING & CONTEXT
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Prompt"
+      description: "Prompts and prompt templates (system prompts, user prompts, with variables)"
+    - name: "PromptTechnique"
+      description: "Prompting techniques (e.g., chain-of-thought, few-shot, ReAct, tree-of-thought, reflection)"
+    - name: "SystemPrompt"
+      description: "System prompts (agent instructions, persona definitions, behavioral constraints)"
+    - name: "ContextWindow"
+      description: "Context window considerations (token limits, context management strategies)"
+    - name: "OutputFormat"
+      description: "Output formats (e.g., JSON, structured output, markdown, with schemas)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # AI EVALUATION & SAFETY
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "AIBenchmark"
+      description: "AI benchmarks (e.g., MMLU, HumanEval, SWE-bench, domain-specific evals)"
+    - name: "EvaluationMetric"
+      description: "Evaluation metrics (e.g., accuracy, faithfulness, relevance, hallucination rate)"
+    - name: "LLMJudge"
+      description: "LLM-as-judge evaluation (using LLMs to evaluate outputs, with rubrics)"
+    - name: "Guardrail"
+      description: "AI guardrails (safety measures, content filters, output validation)"
+    - name: "AILimitation"
+      description: "AI limitations (known failure modes, hallucinations, biases, context limits)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # SOFTWARE & INFRASTRUCTURE
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "AITool"
+      description: "AI-powered tools (e.g., ChatGPT, Claude, Cursor, GitHub Copilot, Perplexity)"
+    - name: "Software"
+      description: "Software tools (e.g., Python libraries, R packages, bioinformatics tools, IDEs)"
+    - name: "API"
+      description: "APIs and services (e.g., OpenAI API, Anthropic API, PubMed API, with endpoints)"
+    - name: "CodeRepository"
+      description: "Code repositories (GitHub/GitLab repos, with language, license, stars, purpose)"
+    - name: "Library"
+      description: "Software libraries (e.g., LangChain, transformers, scikit-learn, with versions)"
+    - name: "Container"
+      description: "Container images (Docker images, with registry, tags, dependencies)"
+    - name: "CloudService"
+      description: "Cloud services (e.g., AWS, GCP, Azure services for ML/AI, with pricing)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # EXPERIMENTAL METHODS & TECHNIQUES
+    # ══════════════════════════════════════════════════════════════════════════════
+    # --- Sequencing Technologies ---
+    - name: "SequencingMethod"
+      description: "Sequencing technologies (e.g., bulk RNA-seq, scRNA-seq, snRNA-seq, ATAC-seq, ChIP-seq, WGS, WES, long-read sequencing)"
+    - name: "SingleCellMethod"
+      description: "Single-cell techniques (e.g., 10x Genomics, Drop-seq, Smart-seq2, CITE-seq, spatial transcriptomics, Visium)"
+    - name: "SequencingPlatform"
+      description: "Sequencing platforms (e.g., Illumina NovaSeq, PacBio, Oxford Nanopore, MGI, Element Biosciences)"
+    
+    # --- Array & High-Throughput Technologies ---
+    - name: "ArrayPlatform"
+      description: "Microarray platforms (e.g., Affymetrix, Illumina BeadChip, Agilent arrays, methylation arrays 450K/EPIC)"
+    - name: "ProteomicMethod"
+      description: "Proteomic techniques (e.g., mass spectrometry, LC-MS/MS, SILAC, TMT, DIA, protein arrays, SomaScan, Olink)"
+    - name: "MetabolomicMethod"
+      description: "Metabolomic techniques (e.g., NMR spectroscopy, GC-MS, LC-MS, targeted/untargeted metabolomics)"
+    - name: "GlycomicMethod"
+      description: "Glycomic techniques (e.g., HPLC, MALDI-TOF, lectin arrays, glycan profiling)"
+    
+    # --- Molecular & Cellular Techniques ---
+    - name: "MolecularTechnique"
+      description: "Molecular biology techniques (e.g., PCR, qPCR, RT-PCR, Western blot, ELISA, immunoprecipitation)"
+    - name: "GeneticPerturbation"
+      description: "Genetic manipulation (e.g., CRISPR-Cas9, RNAi, shRNA, overexpression, knock-in, knock-out, base editing)"
+    - name: "ImagingMethod"
+      description: "Imaging techniques (e.g., confocal microscopy, FISH, immunofluorescence, live-cell imaging, electron microscopy)"
+    - name: "FlowCytometry"
+      description: "Flow cytometry and cell sorting (e.g., FACS, CyTOF, spectral flow cytometry, cell population analysis)"
+    - name: "HistologyMethod"
+      description: "Histological techniques (e.g., H&E staining, IHC, immunohistochemistry, Masson's trichrome, Sirius red)"
+    
+    # --- Clinical & Physiological Methods ---
+    - name: "ClinicalAssay"
+      description: "Clinical assays (e.g., OGTT, hyperinsulinemic clamp, glucose tolerance test, VO2max testing)"
+    - name: "BiosensorMethod"
+      description: "Biosensor technologies (e.g., CGM, wearables, continuous lactate monitoring, heart rate variability)"
+    
+    # --- Computational & Statistical Methods ---
+    - name: "BioinformaticPipeline"
+      description: "Bioinformatics pipelines (e.g., alignment with STAR, variant calling with GATK, cellranger, Seurat, scanpy)"
+    - name: "StatisticalMethod"
+      description: "Statistical methods (e.g., meta-analysis, Mendelian randomization, survival analysis, mixed models)"
+    - name: "ComputationalMethod"
+      description: "Computational methods (e.g., pathway enrichment, network analysis, clustering, dimensionality reduction)"
+    
+    # --- Model Systems ---
+    - name: "AnimalModel"
+      description: "Animal models (e.g., db/db mice, ob/ob mice, aging models, bleomycin fibrosis, diet-induced models)"
+    - name: "CellLineModel"
+      description: "Cell line models (e.g., HEK293, primary fibroblasts, iPSC-derived cells, organoids, spheroids)"
+    - name: "OrganoidModel"
+      description: "Organoid and 3D models (e.g., liver organoids, lung organoids, tissue-on-chip, microphysiological systems)"
+    
+    # --- Data Resources ---
+    - name: "Dataset"
+      description: "Research datasets (e.g., GEO, UK Biobank, GTEx, ENCODE, TCGA, with accession numbers)"
+    - name: "Biobank"
+      description: "Biobanks and sample repositories (e.g., UK Biobank, NHANES, Framingham, with sample types)"
+    - name: "DatabaseResource"
+      description: "Biological databases (e.g., UniProt, Ensembl, KEGG, Reactome, STRING, DrugBank)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # LITERATURE & CITATIONS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Publication"
+      description: "Publications (DOI, PMID, title, authors, journal, year, citation count)"
+    - name: "Author"
+      description: "Authors and researchers (ORCID, affiliations, h-index, research focus)"
+    - name: "Journal"
+      description: "Journals (impact factor, scope, publisher)"
+    - name: "Citation"
+      description: "Citation relationships (citing paper -> cited paper, context)"
+    - name: "ReviewArticle"
+      description: "Reviews and meta-analyses (scope, number of studies, conclusions)"
+    - name: "Preprint"
+      description: "Preprints (bioRxiv, medRxiv, arXiv DOI, version)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # SCIENTIFIC CLAIMS & EVIDENCE
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "ScientificClaim"
+      description: "Scientific claims (statement, evidence level, source, confidence)"
+    - name: "Evidence"
+      description: "Evidence (experimental data, p-values, effect sizes, replication status)"
+    - name: "Contradiction"
+      description: "Contradictory findings (conflicting claims, potential explanations)"
+    - name: "Consensus"
+      description: "Scientific consensus (established facts, level of agreement)"
+    - name: "KnowledgeGap"
+      description: "Knowledge gaps (open questions, research opportunities)"
+    - name: "Limitation"
+      description: "Study limitations (confounders, sample size issues, methodological concerns)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # GRANTS & FUNDING
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "FundingAgency"
+      description: "Funding agencies (NIH, DFG, ERC, NSF, Wellcome Trust, BMBF)"
+    - name: "GrantProgram"
+      description: "Grant programs (R01, ERC Starting Grant, DFG SPP, funding amount ranges)"
+    - name: "ResearchObjective"
+      description: "Research objectives (aims, hypotheses, expected outcomes)"
+    - name: "Milestone"
+      description: "Project milestones (deliverables, timelines, success criteria)"
+    - name: "Budget"
+      description: "Budget items (personnel, equipment, consumables, travel)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # COLLABORATION & WORKFLOW
+    # ══════════════════════════════════════════════════════════════════════════════
     - name: "Organization"
-      description: "Companies, institutions, groups, or formal entities"
-    - name: "Document"
-      description: "Information content in various forms (books, articles, reports, etc.)"
-    - name: "Topic"
-      description: "Subject of conversation, interest, or knowledge domain (use as last resort)"
-    - name: "Object"
-      description: "Physical items, tools, devices, or possessions (use as last resort)"
+      description: "Organizations (universities, institutes, companies, consortia)"
+    - name: "Person"
+      description: "People (collaborators, team members, advisors, with roles and expertise)"
+    - name: "Collaboration"
+      description: "Collaborations (partners, scope, agreements, shared resources)"
+    - name: "Project"
+      description: "Research projects (title, objectives, timeline, team, status)"
+    - name: "Task"
+      description: "Tasks and work items (description, assignee, deadline, status, dependencies)"
+    - name: "Decision"
+      description: "Decisions made (choice, rationale, alternatives considered, stakeholders)"
+    - name: "Meeting"
+      description: "Meetings (date, participants, agenda, action items, outcomes)"
+    - name: "Discussion"
+      description: "Scientific discussions (topic, viewpoints, conclusions, open questions)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # META & FLEXIBILITY
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Hypothesis"
+      description: "Scientific hypotheses (statement, supporting/opposing evidence, testability)"
+    - name: "Observation"
+      description: "Research observations (findings, context, significance)"
+    - name: "ThematicConcept"
+      description: "Overarching themes (e.g., 'metabolic-aging axis', 'glucotoxicity in fibrosis')"
+    - name: "Terminology"
+      description: "Domain terminology (definitions, synonyms, preferred usage)"
+    - name: "Preference"
+      description: "User/team preferences (writing style, tool choices, workflows)"
+    - name: "Procedure"
+      description: "Standard procedures (SOPs, protocols, best practices)"
+    - name: "Requirement"
+      description: "Requirements (grant requirements, journal guidelines, regulatory needs)"
+    
+    # === CATCH-ALL FOR FLEXIBILITY ===
+    - name: "CustomEntity"
+      description: "Flexible entity for anything not fitting other categories (specify type in attributes)"
+    - name: "Relationship"
+      description: "Explicit relationship or connection worth tracking (when edge semantics need entity status)"
+    - name: "Note"
+      description: "Free-form notes, ideas, or annotations (for capturing unstructured insights)"
+
+  # ════════════════════════════════════════════════════════════════════════════════
+  # EDGE TYPES (Relationship/Fact Types)
+  # ════════════════════════════════════════════════════════════════════════════════
+  # These define the types of relationships that can exist between entities.
+  # The LLM will use these to extract structured facts from text.
+  # If source_types/target_types are omitted, the edge can connect any entity types.
+  edge_types:
+    # ══════════════════════════════════════════════════════════════════════════════
+    # MOLECULAR & BIOLOGICAL RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "ENCODES"
+      description: "Gene encodes a protein (Gene -> Protein)"
+      source_types: ["Gene"]
+      target_types: ["Protein"]
+    - name: "REGULATES"
+      description: "Entity regulates another (Gene/Protein regulates Gene/Protein/CellularProcess)"
+    - name: "UPREGULATES"
+      description: "Increases expression or activity of target"
+    - name: "DOWNREGULATES"
+      description: "Decreases expression or activity of target"
+    - name: "INHIBITS"
+      description: "Inhibits or blocks the activity of target"
+    - name: "ACTIVATES"
+      description: "Activates or enhances the activity of target"
+    - name: "BINDS_TO"
+      description: "Physical binding interaction (Protein-Protein, Drug-Target)"
+    - name: "PHOSPHORYLATES"
+      description: "Protein phosphorylates another protein"
+      source_types: ["Protein"]
+      target_types: ["Protein"]
+    - name: "PARTICIPATES_IN"
+      description: "Entity participates in a pathway or process (Protein -> SignalingPathway)"
+    - name: "PART_OF"
+      description: "Entity is part of another (Protein part of complex, Gene part of pathway)"
+    - name: "INTERACTS_WITH"
+      description: "General molecular interaction between entities"
+    - name: "COEXPRESSED_WITH"
+      description: "Genes/proteins that are co-expressed together"
+    - name: "VARIANT_OF"
+      description: "GeneticVariant is a variant of a Gene"
+      source_types: ["GeneticVariant"]
+      target_types: ["Gene"]
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # DISEASE & CLINICAL RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "CAUSES"
+      description: "Entity causes a disease, symptom, or condition"
+    - name: "ASSOCIATED_WITH"
+      description: "Statistical or observed association between entities"
+    - name: "RISK_FACTOR_FOR"
+      description: "Entity is a risk factor for disease/condition"
+    - name: "PROTECTIVE_AGAINST"
+      description: "Entity protects against disease/condition"
+    - name: "BIOMARKER_FOR"
+      description: "Biomarker indicates or predicts a disease/condition"
+      source_types: ["Biomarker"]
+      target_types: ["Disease", "Phenotype"]
+    - name: "TREATS"
+      description: "Drug or treatment treats a disease/condition"
+      source_types: ["Drug", "Treatment"]
+      target_types: ["Disease", "Symptom"]
+    - name: "TARGETS"
+      description: "Drug targets a molecular entity"
+      source_types: ["Drug"]
+      target_types: ["Protein", "Gene", "DrugTarget"]
+    - name: "SIDE_EFFECT_OF"
+      description: "Symptom is a side effect of a drug/treatment"
+    - name: "CONTRAINDICATED_FOR"
+      description: "Drug/treatment is contraindicated for condition"
+    - name: "MANIFESTS_AS"
+      description: "Disease manifests as symptom/phenotype"
+      source_types: ["Disease"]
+      target_types: ["Symptom", "Phenotype"]
+    - name: "PROGRESSES_TO"
+      description: "Disease or condition progresses to another state"
+    - name: "COMORBID_WITH"
+      description: "Disease commonly co-occurs with another disease"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # ANATOMICAL & LOCALIZATION
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "EXPRESSED_IN"
+      description: "Gene/Protein is expressed in tissue/cell type"
+      source_types: ["Gene", "Protein"]
+      target_types: ["Tissue", "CellType", "AnatomicalStructure"]
+    - name: "LOCATED_IN"
+      description: "Entity is located in anatomical structure or cellular compartment"
+    - name: "AFFECTS"
+      description: "Entity affects a tissue, organ, or structure"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # RESEARCH & METHODOLOGY RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "MEASURED_BY"
+      description: "Biomarker/phenotype is measured by a method/assay"
+    - name: "DETECTED_BY"
+      description: "Entity is detected by experimental method"
+    - name: "VALIDATED_IN"
+      description: "Finding validated in model system or cohort"
+    - name: "DERIVED_FROM"
+      description: "Data/result derived from dataset or study"
+    - name: "GENERATED_BY"
+      description: "Data generated by method/pipeline"
+    - name: "USES_METHOD"
+      description: "Study or experiment uses a specific method"
+    - name: "TRAINED_ON"
+      description: "ML model trained on dataset"
+      source_types: ["MLModel"]
+      target_types: ["Dataset", "TrainingDataset"]
+    - name: "PREDICTS"
+      description: "Model or biomarker predicts outcome"
+    - name: "EVALUATES"
+      description: "Metric or benchmark evaluates model/method"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # LITERATURE & CITATION RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "CITES"
+      description: "Publication cites another publication"
+      source_types: ["Publication", "ReviewArticle", "Preprint"]
+      target_types: ["Publication", "ReviewArticle", "Preprint"]
+    - name: "AUTHORED_BY"
+      description: "Publication authored by researcher"
+      source_types: ["Publication", "ReviewArticle", "Preprint"]
+      target_types: ["Author", "Person"]
+    - name: "PUBLISHED_IN"
+      description: "Publication published in journal"
+      source_types: ["Publication", "ReviewArticle"]
+      target_types: ["Journal"]
+    - name: "REPORTS"
+      description: "Publication reports a finding or claim"
+      source_types: ["Publication", "ReviewArticle", "Preprint"]
+      target_types: ["ScientificClaim", "Observation"]
+    - name: "SUPPORTS"
+      description: "Evidence or publication supports a claim/hypothesis"
+    - name: "CONTRADICTS"
+      description: "Finding contradicts another finding or claim"
+    - name: "EXTENDS"
+      description: "Work extends or builds upon previous work"
+    - name: "REPLICATES"
+      description: "Study replicates findings of another study"
+    - name: "FAILS_TO_REPLICATE"
+      description: "Study fails to replicate findings of another study"
+    - name: "REVIEWS"
+      description: "Review article reviews a topic or set of publications"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # ARGUMENTATION & REASONING
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "CRITIQUES"
+      description: "Source critiques methodology, interpretation, or conclusion"
+    - name: "RESPONDS_TO"
+      description: "Publication responds to criticism or question"
+    - name: "DEBATES"
+      description: "Active debate or disagreement exists between sources"
+    - name: "PROPOSES"
+      description: "Source proposes a hypothesis, mechanism, or theory"
+    - name: "CONCLUDES"
+      description: "Study or review concludes with specific claim"
+    - name: "INFERS"
+      description: "Inference made from evidence (weaker than direct observation)"
+    - name: "ASSUMES"
+      description: "Assumption made by study or argument"
+    - name: "BASED_ON"
+      description: "Claim or conclusion is based on specific evidence"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # CAUSALITY & CORRELATION
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "MAY_CAUSE"
+      description: "Potential causal relationship (uncertain)"
+    - name: "MEDIATES"
+      description: "Entity mediates the relationship between two others"
+    - name: "MODERATES"
+      description: "Entity moderates (affects strength of) relationship between others"
+    - name: "CONFOUNDED_BY"
+      description: "Relationship is confounded by third variable"
+    - name: "INDEPENDENT_OF"
+      description: "No relationship found between entities"
+    - name: "NECESSARY_FOR"
+      description: "Entity is necessary (but not sufficient) for outcome"
+    - name: "SUFFICIENT_FOR"
+      description: "Entity is sufficient (but not necessary) for outcome"
+    - name: "CONTRIBUTES_TO"
+      description: "Entity contributes to outcome (partial causation)"
+    - name: "EXACERBATES"
+      description: "Entity worsens or exacerbates condition/outcome"
+    - name: "AMELIORATES"
+      description: "Entity improves or ameliorates condition/outcome"
+    - name: "REVERSES"
+      description: "Intervention reverses effect or condition"
+    - name: "PREVENTS"
+      description: "Entity prevents outcome from occurring"
+    - name: "DELAYS"
+      description: "Entity delays onset or progression"
+    - name: "ACCELERATES"
+      description: "Entity accelerates process or progression"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # UNCERTAINTY & EVIDENCE STRENGTH
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "CONSISTENT_WITH"
+      description: "Finding is consistent with hypothesis (but doesn't prove)"
+    - name: "INCONSISTENT_WITH"
+      description: "Finding is inconsistent with hypothesis"
+    - name: "PARTIALLY_SUPPORTS"
+      description: "Evidence partially supports claim (with caveats)"
+    - name: "PRELIMINARY_EVIDENCE_FOR"
+      description: "Preliminary/early-stage evidence (needs confirmation)"
+    - name: "HYPOTHESIZED_TO"
+      description: "Hypothesized relationship (not yet tested)"
+    - name: "DISPUTED"
+      description: "Relationship is disputed in the literature"
+    - name: "ESTABLISHED"
+      description: "Well-established relationship (scientific consensus)"
+    - name: "EMERGING_EVIDENCE_FOR"
+      description: "Emerging evidence (recent, accumulating support)"
+    - name: "LIMITED_EVIDENCE_FOR"
+      description: "Limited evidence available"
+    - name: "CONFLICTING_EVIDENCE_FOR"
+      description: "Evidence is conflicting/mixed"
+    - name: "NEEDS_FURTHER_STUDY"
+      description: "Relationship identified but needs more research"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # AI/ML & TOOL RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "IMPLEMENTS"
+      description: "Software/tool implements algorithm or method"
+    - name: "WRAPS"
+      description: "Tool wraps or interfaces with another tool/API"
+    - name: "EXTENDS_TOOL"
+      description: "Tool extends capabilities of another tool"
+    - name: "INTEGRATES_WITH"
+      description: "System integrates with another system"
+    - name: "CALLS"
+      description: "Agent or tool calls another tool/API"
+    - name: "RETRIEVES_FROM"
+      description: "RAG system retrieves from knowledge source"
+    - name: "STORES_IN"
+      description: "System stores data in database/vector store"
+    - name: "EXPOSES"
+      description: "MCP server exposes tool or resource"
+      source_types: ["MCPServer"]
+      target_types: ["MCPTool", "MCPResource"]
+    - name: "PROMPTED_BY"
+      description: "Agent behavior prompted by prompt template"
+    - name: "EVALUATED_BY"
+      description: "Model evaluated by benchmark or metric"
+    - name: "OUTPERFORMS"
+      description: "Model outperforms another on benchmark"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # COLLABORATION & ORGANIZATIONAL
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "WORKS_AT"
+      description: "Person works at organization"
+      source_types: ["Person", "Author"]
+      target_types: ["Organization"]
+    - name: "COLLABORATES_WITH"
+      description: "Person/org collaborates with another"
+    - name: "LEADS"
+      description: "Person leads project or team"
+    - name: "WORKS_ON"
+      description: "Person works on project or task"
+    - name: "ASSIGNED_TO"
+      description: "Task assigned to person"
+      source_types: ["Task"]
+      target_types: ["Person"]
+    - name: "DEPENDS_ON"
+      description: "Task or milestone depends on another"
+    - name: "FUNDED_BY"
+      description: "Project funded by agency/grant"
+    - name: "MEMBER_OF"
+      description: "Person/org is member of collaboration/consortium"
+    - name: "SUPERVISES"
+      description: "Person supervises another person"
+    - name: "DECIDED_BY"
+      description: "Decision made by person or meeting"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # TEMPORAL & CAUSAL RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "PRECEDES"
+      description: "Event or process precedes another in time"
+    - name: "FOLLOWS"
+      description: "Event or process follows another in time"
+    - name: "LEADS_TO"
+      description: "Causal relationship: A leads to B"
+    - name: "TRIGGERED_BY"
+      description: "Event or process triggered by another"
+    - name: "CONCURRENT_WITH"
+      description: "Events occurring at the same time"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # SEMANTIC & CONCEPTUAL RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "IS_A"
+      description: "Hierarchical relationship (subtype of)"
+    - name: "SYNONYM_OF"
+      description: "Terms that are synonymous"
+    - name: "RELATED_TO"
+      description: "General semantic relationship (use when more specific type doesn't apply)"
+    - name: "INSTANCE_OF"
+      description: "Entity is an instance of a class/type (use for concrete examples of a category)"
+    - name: "DEFINES"
+      description: "Term or concept defines another"
+    - name: "ADDRESSES"
+      description: "Research/method addresses a knowledge gap or question"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # PREFERENCE & REQUIREMENT RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "PREFERS"
+      description: "User/team prefers a tool, method, or approach"
+    - name: "REQUIRES"
+      description: "Project/grant requires specific deliverable or capability"
+    - name: "RECOMMENDS"
+      description: "Source recommends approach or tool"
+    - name: "DEPRECATES"
+      description: "New version deprecates old version/approach"
+    
+    # === CATCH-ALL ===
+    - name: "CUSTOM_RELATION"
+      description: "Flexible relationship type (specify details in fact description)"
