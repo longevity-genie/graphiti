@@ -169,6 +169,67 @@ class GeminiClient(LLMClient):
         """Get the maximum output tokens for a specific Gemini model."""
         return GEMINI_MODEL_MAX_TOKENS.get(model, DEFAULT_GEMINI_MAX_TOKENS)
 
+    def _get_thinking_config_for_model(self, model: str) -> 'types.ThinkingConfig | None':
+        """
+        Get the appropriate thinking config for a specific model.
+
+        Thinking config compatibility:
+        - Gemini 3.x models: support thinking_level ("minimal", "low", "medium", "high")
+        - Gemini 2.5 (non-lite) models: support thinking_budget (0=off, -1=dynamic, >0=token budget)
+        - Gemini 2.5-flash-lite and older models: NO thinking config support
+
+        Args:
+            model: The model name to check
+
+        Returns:
+            The appropriate thinking config for the model, or None if not supported
+        """
+        if self.thinking_config is None:
+            return None
+
+        model_lower = model.lower()
+
+        # Check if it's a lite model - these don't support any thinking config
+        if 'lite' in model_lower:
+            return None
+
+        # Check model family and return appropriate config
+        is_gemini_3 = 'gemini-3' in model_lower or 'gemini3' in model_lower
+
+        # If the stored thinking_config has thinking_level, it's for Gemini 3
+        # If using a non-Gemini-3 model, we need to either convert or skip
+        has_thinking_level = hasattr(self.thinking_config, 'thinking_level') and getattr(
+            self.thinking_config, 'thinking_level', None
+        )
+        has_thinking_budget = hasattr(self.thinking_config, 'thinking_budget') and getattr(
+            self.thinking_config, 'thinking_budget', None
+        ) is not None
+
+        if is_gemini_3:
+            # Gemini 3 models support thinking_level
+            if has_thinking_level:
+                return self.thinking_config
+            elif has_thinking_budget:
+                # Convert budget-based config to level-based for Gemini 3
+                # Budget 0 or None means no thinking, otherwise use minimal
+                budget = getattr(self.thinking_config, 'thinking_budget', 0)
+                if budget == 0:
+                    return None
+                return types.ThinkingConfig(thinking_level='minimal')
+        else:
+            # Gemini 2.5 models (non-lite) support thinking_budget
+            is_gemini_25 = '2.5' in model_lower or '2-5' in model_lower
+            if is_gemini_25:
+                if has_thinking_budget:
+                    return self.thinking_config
+                elif has_thinking_level:
+                    # Convert level-based config to budget-based for Gemini 2.5
+                    # Any thinking_level means we want some thinking, use dynamic budget
+                    return types.ThinkingConfig(thinking_budget=-1)
+
+        # For older models or unknown models, don't use thinking config
+        return None
+
     def _resolve_max_tokens(self, requested_max_tokens: int | None, model: str) -> int:
         """
         Resolve the maximum output tokens to use based on precedence rules.
@@ -286,6 +347,13 @@ class GeminiClient(LLMClient):
             # Resolve max_tokens using precedence rules (see _resolve_max_tokens for details)
             resolved_max_tokens = self._resolve_max_tokens(max_tokens, model)
 
+            # Get the appropriate thinking config for the actual model being used
+            # This is important because thinking config varies by model family:
+            # - Gemini 3.x: thinking_level
+            # - Gemini 2.5 (non-lite): thinking_budget
+            # - Gemini 2.5-flash-lite and older: not supported
+            model_thinking_config = self._get_thinking_config_for_model(model)
+
             # Create generation config
             generation_config = types.GenerateContentConfig(
                 temperature=self.temperature,
@@ -293,7 +361,7 @@ class GeminiClient(LLMClient):
                 response_mime_type='application/json' if response_model else None,
                 response_schema=response_model if response_model else None,
                 system_instruction=system_prompt,
-                thinking_config=self.thinking_config,
+                thinking_config=model_thinking_config,
             )
 
             # Generate content using the simple string approach

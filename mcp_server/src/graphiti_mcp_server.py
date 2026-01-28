@@ -146,9 +146,11 @@ API keys are provided for any language model operations.
 """
 
 # MCP server instance
+# mount_path='/mcp' + streamable_http_path='/mcp' = endpoint at /mcp/mcp
 mcp = FastMCP(
     'Graphiti Agent Memory',
     instructions=GRAPHITI_MCP_INSTRUCTIONS,
+    mount_path='/mcp',
 )
 
 # Global services
@@ -998,7 +1000,7 @@ async def run_mcp_server():
         logger.info('=' * 60)
         logger.info('MCP Server Access Information:')
         logger.info(f'  Base URL: http://{display_host}:{mcp.settings.port}/')
-        logger.info(f'  MCP Endpoint: http://{display_host}:{mcp.settings.port}/mcp/')
+        logger.info(f'  MCP Endpoint: http://{display_host}:{mcp.settings.port}/mcp/mcp')
         logger.info('  Transport: HTTP (streamable)')
 
         # Show FalkorDB Browser UI access if enabled
@@ -1006,7 +1008,7 @@ async def run_mcp_server():
             logger.info(f'  FalkorDB Browser UI: http://{display_host}:3000/')
 
         logger.info('=' * 60)
-        logger.info('For MCP clients, connect to the /mcp/ endpoint above')
+        logger.info('For MCP clients, connect to the /mcp/mcp endpoint above')
 
         # Configure uvicorn logging to match our format
         configure_uvicorn_logging()
