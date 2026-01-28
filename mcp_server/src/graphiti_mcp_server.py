@@ -13,6 +13,7 @@ from typing import Any, Optional
 
 from dotenv import load_dotenv
 from graphiti_core import Graphiti
+from graphiti_core.driver.driver import GraphProvider
 from graphiti_core.edges import EntityEdge
 from graphiti_core.nodes import EpisodeType, EpisodicNode
 from graphiti_core.search.search_filters import SearchFilters
@@ -26,6 +27,8 @@ from models.response_types import (
     EpisodeSearchResponse,
     ErrorResponse,
     FactSearchResponse,
+    KnowledgeGraphListResponse,
+    KnowledgeGraphResult,
     NodeResult,
     NodeSearchResponse,
     StatusResponse,
@@ -137,16 +140,19 @@ Facts contain temporal metadata, allowing you to track the time of creation and 
 
 Key capabilities:
 1. Add episodes (text, messages, or JSON) to the knowledge graph with the add_memory tool
-2. Search for nodes (entities) in the graph using natural language queries with search_nodes
-3. Find relevant facts (relationships between entities) with search_facts
-4. Retrieve specific entity edges or episodes by UUID
-5. Manage the knowledge graph with tools like delete_episode, delete_entity_edge, and clear_graph
+2. List all available knowledge graphs (group IDs) using list_knowledge_graphs
+3. Search for nodes (entities) in the graph using natural language queries with search_nodes
+4. Find relevant facts (relationships between entities) with search_facts
+5. Retrieve specific entity edges or episodes by UUID
+6. Manage the knowledge graph with tools like delete_episode, delete_entity_edge, and clear_graph
 
 The server connects to a database for persistent storage and uses language models for certain operations. 
-Each piece of information is organized by group_id, allowing you to maintain separate knowledge domains.
+Each piece of information is organized by group_id, which represents a unique knowledge graph identifier. 
+This allows you to maintain separate, isolated knowledge graphs for different users, projects, or domains.
 
 When adding information, provide descriptive names and detailed content to improve search quality. 
-When searching, use specific queries and consider filtering by group_id for more relevant results.
+When searching, use specific queries and consider filtering by group_ids (a list of knowledge graph identifiers) 
+for more relevant results.
 
 For optimal performance, ensure the database is properly configured and accessible, and valid 
 API keys are provided for any language model operations.
@@ -427,8 +433,8 @@ async def add_memory(
         episode_body (str): The content of the episode to persist to memory. When source='json', this must be a
                            properly escaped JSON string, not a raw Python dictionary. The JSON data will be
                            automatically processed to extract entities and relationships.
-        group_id (str, optional): A unique ID for this graph. If not provided, uses the default group_id from CLI
-                                 or a generated one.
+        group_id (str, optional): A unique identifier for the knowledge graph where this episode will be stored.
+                                 If not provided, uses the default group_id from configuration.
         source (str, optional): Source type, must be one of:
                                - 'text': For plain text content (default)
                                - 'json': For structured data
@@ -437,13 +443,13 @@ async def add_memory(
         uuid (str, optional): Optional UUID for the episode
 
     Examples:
-        # Adding plain text content
+        # Adding plain text content to a specific knowledge graph
         add_memory(
             name="Company News",
             episode_body="Acme Corp announced a new product line today.",
             source="text",
             source_description="news article",
-            group_id="some_arbitrary_string"
+            group_id="acme_knowledge_graph"
         )
 
         # Adding structured JSON data
@@ -506,16 +512,16 @@ async def add_memory(
 async def search_nodes(
     query: str,
     group_ids: list[str] | None = None,
-    max_nodes: int = 10,
+    max_nodes: int | None = None,
     entity_types: list[str] | None = None,
 ) -> NodeSearchResponse | ErrorResponse:
-    """Search for nodes in the graph memory.
+    """Search for nodes (entities) in the knowledge graph.
 
     Args:
-        query: The search query
-        group_ids: Optional list of group IDs to filter results. If not provided,
-                  searches across all available groups.
-        max_nodes: Maximum number of nodes to return (default: 10)
+        query: The search query to find relevant entities
+        group_ids: Optional list of knowledge graph identifiers (group IDs) to filter results.
+                  If not provided, searches across all available knowledge graphs.
+        max_nodes: Maximum number of nodes to return (default: from configuration)
         entity_types: Optional list of entity type names to filter by
     """
     global graphiti_service
@@ -525,6 +531,9 @@ async def search_nodes(
 
     try:
         client = await graphiti_service.get_client()
+
+        # Determine effective max_nodes
+        effective_max_nodes = max_nodes or config.graphiti.default_search_limit
 
         # Determine effective group_ids:
         # 1. If group_ids explicitly provided, use them
@@ -560,7 +569,7 @@ async def search_nodes(
         )
 
         # Extract nodes from results
-        nodes = results.nodes[:max_nodes] if results.nodes else []
+        nodes = results.nodes[:effective_max_nodes] if results.nodes else []
 
         if not nodes:
             search_scope = (
@@ -601,16 +610,16 @@ async def search_nodes(
 async def search_memory_facts(
     query: str,
     group_ids: list[str] | None = None,
-    max_facts: int = 10,
+    max_facts: int | None = None,
     center_node_uuid: str | None = None,
 ) -> FactSearchResponse | ErrorResponse:
-    """Search the graph memory for relevant facts.
+    """Search for relevant facts (relationships) in the knowledge graph memory.
 
     Args:
-        query: The search query
-        group_ids: Optional list of group IDs to filter results. If not provided,
-                  searches across all available groups.
-        max_facts: Maximum number of facts to return (default: 10)
+        query: The search query to find relevant facts or relationships
+        group_ids: Optional list of knowledge graph identifiers (group IDs) to filter results.
+                  If not provided, searches across all available knowledge graphs.
+        max_facts: Maximum number of facts to return (default: from configuration)
         center_node_uuid: Optional UUID of a node to center the search around
     """
     global graphiti_service
@@ -619,8 +628,11 @@ async def search_memory_facts(
         return ErrorResponse(error='Graphiti service not initialized')
 
     try:
+        # Determine effective max_facts
+        effective_max_facts = max_facts or config.graphiti.default_search_limit
+
         # Validate max_facts parameter
-        if max_facts <= 0:
+        if effective_max_facts <= 0:
             return ErrorResponse(error='max_facts must be a positive integer')
 
         client = await graphiti_service.get_client()
@@ -646,7 +658,7 @@ async def search_memory_facts(
         relevant_edges = await client.search(
             group_ids=effective_group_ids,
             query=query,
-            num_results=max_facts,
+            num_results=effective_max_facts,
             center_node_uuid=center_node_uuid,
         )
 
@@ -748,14 +760,14 @@ async def get_entity_edge(uuid: str) -> dict[str, Any] | ErrorResponse:
 @mcp.tool()
 async def get_episodes(
     group_ids: list[str] | None = None,
-    max_episodes: int = 10,
+    max_episodes: int | None = None,
 ) -> EpisodeSearchResponse | ErrorResponse:
-    """Get episodes from the graph memory.
+    """Retrieve episodes (content snippets) from the knowledge graph memory.
 
     Args:
-        group_ids: Optional list of group IDs to filter results. If not provided,
-                  retrieves episodes from all available groups.
-        max_episodes: Maximum number of episodes to return (default: 10)
+        group_ids: Optional list of knowledge graph identifiers (group IDs) to filter results.
+                  If not provided, retrieves episodes from all available knowledge graphs.
+        max_episodes: Maximum number of episodes to return (default: from configuration)
     """
     global graphiti_service
 
@@ -764,6 +776,9 @@ async def get_episodes(
 
     try:
         client = await graphiti_service.get_client()
+
+        # Determine effective max_episodes
+        effective_max_episodes = max_episodes or config.graphiti.default_search_limit
 
         # Determine effective group_ids:
         # 1. If group_ids explicitly provided, use them
@@ -788,7 +803,7 @@ async def get_episodes(
 
         if effective_group_ids is not None:
             episodes = await EpisodicNode.get_by_group_ids(
-                client.driver, effective_group_ids, limit=max_episodes
+                client.driver, effective_group_ids, limit=effective_max_episodes
             )
         else:
             # Retrieve all episodes across all groups
@@ -800,7 +815,7 @@ async def get_episodes(
                 ORDER BY e.valid_at DESC, e.created_at DESC
                 LIMIT $limit
                 """,
-                limit=max_episodes,
+                limit=effective_max_episodes,
                 routing_='r',
             )
             from graphiti_core.nodes import get_episodic_node_from_record
@@ -841,13 +856,145 @@ async def get_episodes(
 
 
 @mcp.tool()
+async def list_knowledge_graphs() -> KnowledgeGraphListResponse | ErrorResponse:
+    """List all available knowledge graphs (group IDs) and their basic statistics.
+
+    This tool helps you understand which knowledge graphs exist in the database
+    and what kind of information they contain, helping you decide which group_id
+    to use for subsequent operations.
+    """
+    global graphiti_service
+    if graphiti_service is None:
+        return ErrorResponse(error='Graphiti service not initialized')
+
+    try:
+        client = await graphiti_service.get_client()
+        driver = client.driver
+
+        graphs: dict[str, KnowledgeGraphResult] = {}
+
+        # 1. Query current database for all group_ids
+        # We query for Entity and Episodic nodes to find all active group_ids
+        records, _, _ = await driver.execute_query(
+            """
+            MATCH (n)
+            WHERE n:Entity OR n:Episodic
+            WITH n.group_id as gid, 
+                 CASE WHEN n:Entity THEN 1 ELSE 0 END as is_entity,
+                 CASE WHEN n:Episodic THEN 1 ELSE 0 END as is_episode,
+                 n.created_at as created_at
+            RETURN gid as group_id, 
+                   sum(is_entity) as entity_count, 
+                   sum(is_episode) as episode_count, 
+                   max(created_at) as last_updated
+            """
+        )
+
+        for record in records:
+            gid = record['group_id']
+            if gid:
+                from graphiti_core.helpers import parse_db_date
+
+                last_updated_dt = parse_db_date(record['last_updated'])
+                graphs[gid] = KnowledgeGraphResult(
+                    group_id=gid,
+                    entity_count=int(record['entity_count'] or 0),
+                    episode_count=int(record['episode_count'] or 0),
+                    last_updated=last_updated_dt.isoformat() if last_updated_dt else None,
+                    description=None,
+                )
+
+        # 2. If FalkorDB, check for other databases (graphs) in the same instance
+        if driver.provider == GraphProvider.FALKORDB:
+            try:
+                # driver.client is the FalkorDB instance in graphiti-core
+                # Use getattr to avoid linter errors on abstract GraphDriver
+                falkor_client = getattr(driver, 'client', None)
+                if falkor_client and hasattr(falkor_client, 'list_graphs'):
+                    all_graphs = await falkor_client.list_graphs()
+                    for graph_name in all_graphs:
+                        if graph_name not in graphs:
+                            # We found a graph that might not have nodes yet or is just a different DB
+                            graphs[graph_name] = KnowledgeGraphResult(
+                                group_id=graph_name,
+                                entity_count=0,
+                                episode_count=0,
+                                last_updated=None,
+                                description=f'Separate FalkorDB graph: {graph_name}',
+                            )
+            except Exception as e:
+                logger.warning(f'Failed to list FalkorDB graphs: {e}')
+
+        # 3. For each group, try to get a better description (e.g., top labels)
+        for gid in graphs:
+            if graphs[gid]['description']:
+                continue  # skip if already set (like for FalkorDB empty graphs)
+
+            # Fetch some labels to understand what this graph is about
+            try:
+                # We need to use the right driver for the group if it's a separate DB (FalkorDB)
+                target_driver = (
+                    driver.clone(database=gid)
+                    if driver.provider == GraphProvider.FALKORDB
+                    else driver
+                )
+
+                label_records, _, _ = await target_driver.execute_query(
+                    """
+                    MATCH (n:Entity)
+                    WHERE n.group_id = $group_id OR $is_falkor
+                    UNWIND labels(n) as label
+                    WITH label WHERE label <> 'Entity'
+                    RETURN label, count(*) as count
+                    ORDER BY count DESC
+                    LIMIT 5
+                    """,
+                    group_id=gid,
+                    is_falkor=(driver.provider == GraphProvider.FALKORDB),
+                )
+
+                if label_records:
+                    labels = [r['label'] for r in label_records]
+                    graphs[gid]['description'] = f'Contains entities of types: {", ".join(labels)}'
+                else:
+                    # Try to get some node names if no labels found
+                    name_records, _, _ = await target_driver.execute_query(
+                        """
+                        MATCH (n:Entity)
+                        WHERE n.group_id = $group_id OR $is_falkor
+                        RETURN n.name as name
+                        LIMIT 5
+                        """,
+                        group_id=gid,
+                        is_falkor=(driver.provider == GraphProvider.FALKORDB),
+                    )
+                    if name_records:
+                        names = [r['name'] for r in name_records]
+                        graphs[gid]['description'] = f'Contains entities like: {", ".join(names)}'
+                    else:
+                        graphs[gid]['description'] = 'Knowledge graph with no entities yet.'
+            except Exception as e:
+                logger.debug(f'Failed to get description for graph {gid}: {e}')
+                graphs[gid]['description'] = 'Knowledge graph'
+
+        return KnowledgeGraphListResponse(
+            message=f'Found {len(graphs)} knowledge graph(s)', graphs=list(graphs.values())
+        )
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f'Error listing knowledge graphs: {error_msg}')
+        return ErrorResponse(error=f'Error listing knowledge graphs: {error_msg}')
+
+
+@mcp.tool()
 async def clear_graph(group_ids: list[str] | None = None) -> SuccessResponse | ErrorResponse:
-    """Clear all data from the graph for specified group IDs.
+    """Clear all data from specific knowledge graphs.
 
     Args:
-        group_ids: Optional list of group IDs to clear. If not provided, clears the default group
-                  from config. If no default is configured, returns an error (to prevent accidentally
-                  clearing all data).
+        group_ids: Optional list of knowledge graph identifiers (group IDs) to clear.
+                  If not provided, clears the default knowledge graph from configuration.
+                  If no default is configured, returns an error to prevent accidental
+                  deletion of all data.
     """
     global graphiti_service
 

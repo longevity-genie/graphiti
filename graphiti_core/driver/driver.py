@@ -29,7 +29,7 @@ from graphiti_core.driver.search_interface.search_interface import SearchInterfa
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SIZE = 10
+DEFAULT_SIZE = int(os.environ.get('DEFAULT_SIZE', 200))
 
 load_dotenv()
 

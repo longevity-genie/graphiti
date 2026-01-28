@@ -7,10 +7,10 @@ from graph_service.dto.common import Message
 
 class SearchQuery(BaseModel):
     group_ids: list[str] | None = Field(
-        None, description='The group ids for the memories to search'
+        None, description='The unique identifiers for the knowledge graphs (group IDs) to search'
     )
     query: str
-    max_facts: int = Field(default=10, description='The maximum number of facts to retrieve')
+    max_facts: int = Field(default=200, description='The maximum number of facts to retrieve')
 
 
 class FactResult(BaseModel):
@@ -31,8 +31,10 @@ class SearchResults(BaseModel):
 
 
 class GetMemoryRequest(BaseModel):
-    group_id: str = Field(..., description='The group id of the memory to get')
-    max_facts: int = Field(default=10, description='The maximum number of facts to retrieve')
+    group_id: str = Field(
+        ..., description='The unique identifier for the knowledge graph (group ID) to retrieve from'
+    )
+    max_facts: int = Field(default=200, description='The maximum number of facts to retrieve')
     center_node_uuid: str | None = Field(
         ..., description='The uuid of the node to center the retrieval on'
     )

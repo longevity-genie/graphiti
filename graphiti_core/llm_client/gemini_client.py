@@ -201,9 +201,10 @@ class GeminiClient(LLMClient):
         has_thinking_level = hasattr(self.thinking_config, 'thinking_level') and getattr(
             self.thinking_config, 'thinking_level', None
         )
-        has_thinking_budget = hasattr(self.thinking_config, 'thinking_budget') and getattr(
-            self.thinking_config, 'thinking_budget', None
-        ) is not None
+        has_thinking_budget = (
+            hasattr(self.thinking_config, 'thinking_budget')
+            and getattr(self.thinking_config, 'thinking_budget', None) is not None
+        )
 
         if is_gemini_3:
             # Gemini 3 models support thinking_level

@@ -90,7 +90,9 @@ class EpisodeType(Enum):
 class Node(BaseModel, ABC):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
     name: str = Field(description='name of the node')
-    group_id: str = Field(description='partition of the graph')
+    group_id: str = Field(
+        description='The unique identifier for the knowledge graph (group ID) this node belongs to'
+    )
     labels: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: utc_now())
 
@@ -454,8 +456,10 @@ class EpisodicNode(Node):
     async def get_by_entity_node_uuid(cls, driver: GraphDriver, entity_node_uuid: str):
         if driver.graph_operations_interface:
             try:
-                return await driver.graph_operations_interface.episodic_node_get_by_entity_node_uuid(
-                    cls, driver, entity_node_uuid
+                return (
+                    await driver.graph_operations_interface.episodic_node_get_by_entity_node_uuid(
+                        cls, driver, entity_node_uuid
+                    )
                 )
             except NotImplementedError:
                 pass

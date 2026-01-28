@@ -80,6 +80,7 @@ except ImportError:
 
 from graphiti_core.cross_encoder import CrossEncoderClient
 from graphiti_core.cross_encoder.openai_reranker_client import OpenAIRerankerClient
+
 from utils.utils import create_azure_credential_token_provider
 
 
@@ -255,19 +256,27 @@ class LLMClientFactory:
                         # "minimal" is closest to no-thinking for Gemini 3 Flash
                         try:
                             thinking_config = types.ThinkingConfig(thinking_level='minimal')
-                            logger.info('Using ThinkingConfig with thinking_level="minimal" for Gemini 3')
+                            logger.info(
+                                'Using ThinkingConfig with thinking_level="minimal" for Gemini 3'
+                            )
                         except Exception as e:
                             # Catch all exceptions including pydantic ValidationError
-                            logger.info(f'thinking_level not supported: {e}, trying without ThinkingConfig')
+                            logger.info(
+                                f'thinking_level not supported: {e}, trying without ThinkingConfig'
+                            )
                             thinking_config = None
                     elif is_gemini_25:
                         # Gemini 2.5 models: use thinking_budget=0 to disable
                         try:
                             thinking_config = types.ThinkingConfig(thinking_budget=0)
-                            logger.info('Using ThinkingConfig with thinking_budget=0 for Gemini 2.5')
+                            logger.info(
+                                'Using ThinkingConfig with thinking_budget=0 for Gemini 2.5'
+                            )
                         except Exception as e:
                             # Catch all exceptions including pydantic ValidationError
-                            logger.info(f'thinking_budget not supported: {e}, trying without ThinkingConfig')
+                            logger.info(
+                                f'thinking_budget not supported: {e}, trying without ThinkingConfig'
+                            )
                             thinking_config = None
                     else:
                         # Other/older models: no ThinkingConfig needed
@@ -595,9 +604,7 @@ class CrossEncoderFactory:
                 # if OpenAI config is available, otherwise raise error
                 if config.providers.openai and config.providers.openai.api_key:
                     api_key = config.providers.openai.api_key
-                    logger.info(
-                        f'Using OpenAI reranker as fallback for {provider} LLM provider'
-                    )
+                    logger.info(f'Using OpenAI reranker as fallback for {provider} LLM provider')
                     reranker_config = GraphitiLLMConfig(
                         api_key=api_key,
                         model='gpt-4.1-nano',

@@ -408,6 +408,16 @@ graphiti:
       description: "Reviews and meta-analyses (scope, number of studies, conclusions)"
     - name: "Preprint"
       description: "Preprints (bioRxiv, medRxiv, arXiv DOI, version)"
+    - name: "Abstract"
+      description: "Paper abstract or summary"
+    - name: "Keyword"
+      description: "Paper keyword, MeSH term, or tag"
+    - name: "SupplementaryMaterial"
+      description: "Supplementary data, code, or materials"
+    - name: "Figure"
+      description: "Figure or table from publication"
+    - name: "PeerReview"
+      description: "Peer review report or reviewer comments"
     
     # ══════════════════════════════════════════════════════════════════════════════
     # SCIENTIFIC CLAIMS & EVIDENCE
@@ -440,6 +450,94 @@ graphiti:
       description: "Budget items (personnel, equipment, consumables, travel)"
     
     # ══════════════════════════════════════════════════════════════════════════════
+    # GRANT WRITING & APPLICATION ENTITIES
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "GrantProposal"
+      description: "Grant proposal or application being written/submitted"
+    - name: "CallForProposals"
+      description: "Funding call, RFA, FOA announcement"
+    - name: "Deadline"
+      description: "Submission deadline or due date"
+    - name: "EligibilityCriteria"
+      description: "Eligibility requirements for grant applicants"
+    - name: "Consortium"
+      description: "Grant consortium or multi-partner collaboration"
+    - name: "WorkPackage"
+      description: "Grant work package or project component"
+    - name: "Deliverable"
+      description: "Grant deliverable or milestone output"
+    - name: "SpecificAim"
+      description: "Specific aim or objective of grant proposal"
+    - name: "StudySection"
+      description: "NIH study section or review panel"
+    - name: "ReviewCriteria"
+      description: "Grant review criteria (significance, innovation, approach, etc.)"
+    - name: "BudgetJustification"
+      description: "Budget justification narrative"
+    - name: "Affiliation"
+      description: "Institutional affiliation or appointment"
+    - name: "Subcontract"
+      description: "Subcontract or subaward to partner institution"
+    - name: "LetterOfSupport"
+      description: "Letter of support or collaboration letter"
+    - name: "Biosketch"
+      description: "NIH biosketch or CV for grant"
+    - name: "FacilitiesStatement"
+      description: "Facilities and resources statement"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # LONGEVITY & AGING ENTITIES (Extended)
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Lifespan"
+      description: "Lifespan metric or survival outcome (mean/max lifespan, survival curves)"
+    - name: "Healthspan"
+      description: "Healthspan metric or functional outcome (disability-free years)"
+    - name: "GeroprotectiveCompound"
+      description: "Geroprotective compound (rapamycin, metformin, NAD+ precursors, spermidine)"
+    - name: "SenescentCell"
+      description: "Senescent cell type or senescence marker (p16, SA-beta-gal)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # STARTUP & BUSINESS ENTITIES
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Startup"
+      description: "Startup company, spinoff, or early-stage venture"
+    - name: "Product"
+      description: "Commercial product, device, or offering"
+    - name: "Investor"
+      description: "Investor, VC firm, angel, or funding entity"
+    - name: "Patent"
+      description: "Patent, intellectual property, or IP filing"
+    - name: "Market"
+      description: "Target market or market segment"
+    - name: "CustomerSegment"
+      description: "Customer segment, persona, or user type"
+    - name: "Competitor"
+      description: "Competitor company or competing product"
+    - name: "ValueProposition"
+      description: "Value proposition or unique selling point"
+    - name: "BusinessModel"
+      description: "Business model (SaaS, B2B, B2C, licensing, etc.)"
+    - name: "PitchDeck"
+      description: "Pitch deck, investor presentation, or fundraising material"
+    - name: "FundingRound"
+      description: "Funding round (seed, Series A, B, etc.)"
+    - name: "TermSheet"
+      description: "Term sheet or investment agreement"
+    - name: "RegulatoryBody"
+      description: "Regulatory agency (FDA, EMA, MHRA, Health Canada)"
+    - name: "RegulatoryPathway"
+      description: "Regulatory pathway (510(k), PMA, De Novo, CE mark)"
+    - name: "ClinicalEndpoint"
+      description: "Clinical trial endpoint or outcome measure"
+    - name: "MarketSize"
+      description: "Market size estimate (TAM, SAM, SOM)"
+    - name: "Traction"
+      description: "Business traction metric (users, revenue, partnerships, LOIs)"
+    - name: "ValidationEvidence"
+      description: "Validation evidence (pilot study, customer feedback, LOI)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
     # COLLABORATION & WORKFLOW
     # ══════════════════════════════════════════════════════════════════════════════
     - name: "Organization"
@@ -458,6 +556,34 @@ graphiti:
       description: "Meetings (date, participants, agenda, action items, outcomes)"
     - name: "Discussion"
       description: "Scientific discussions (topic, viewpoints, conclusions, open questions)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # EVENTS & CONFERENCES ENTITIES
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "Conference"
+      description: "Scientific or industry conference (NeurIPS, ISMB, JPM Healthcare, AGBT, etc.)"
+    - name: "Workshop"
+      description: "Workshop, tutorial, or training session"
+    - name: "Symposium"
+      description: "Symposium or focused scientific meeting"
+    - name: "Hackathon"
+      description: "Hackathon, datathon, or coding competition"
+    - name: "DemoDay"
+      description: "Demo day, pitch event, or showcase"
+    - name: "Summit"
+      description: "Summit, forum, or executive gathering"
+    - name: "Webinar"
+      description: "Webinar, online seminar, or virtual event"
+    - name: "Presentation"
+      description: "Talk, presentation, or oral session"
+    - name: "Poster"
+      description: "Poster presentation or poster session"
+    - name: "Booth"
+      description: "Exhibition booth, demo station, or trade show presence"
+    - name: "Award"
+      description: "Award, prize, or recognition received"
+    - name: "Panel"
+      description: "Panel discussion or roundtable"
     
     # ══════════════════════════════════════════════════════════════════════════════
     # META & FLEXIBILITY
@@ -529,6 +655,74 @@ graphiti:
       target_types: ["Gene"]
     
     # ══════════════════════════════════════════════════════════════════════════════
+    # GENETIC PERTURBATION RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "KNOCKOUT_OF"
+      description: "Gene knockout (complete deletion/inactivation of gene function)"
+    - name: "KNOCKDOWN_OF"
+      description: "Gene knockdown (partial reduction via RNAi, siRNA, shRNA)"
+    - name: "OVEREXPRESSES"
+      description: "Overexpression of gene/protein (gain of function)"
+    - name: "SILENCES"
+      description: "Gene silencing (epigenetic or transcriptional repression)"
+    - name: "EDITS"
+      description: "CRISPR/gene editing of target (base editing, prime editing)"
+    - name: "MUTATES"
+      description: "Introduces mutation in gene/protein"
+    - name: "DEPLETES"
+      description: "Depletion of protein/molecule (degradation, auxin-inducible, etc.)"
+    - name: "RESCUES"
+      description: "Genetic rescue (restores function lost by mutation/knockout)"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # METABOLIC & ENZYMATIC RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "METABOLIZES"
+      description: "Enzyme/pathway metabolizes substrate"
+    - name: "CONVERTS_TO"
+      description: "Metabolic conversion (glucose converts to pyruvate)"
+    - name: "SUBSTRATE_OF"
+      description: "Molecule is substrate of enzyme"
+    - name: "PRODUCT_OF"
+      description: "Molecule is product of enzymatic reaction"
+    - name: "CATALYZES"
+      description: "Enzyme catalyzes reaction"
+    - name: "TRANSPORTS"
+      description: "Transporter moves molecule across membrane"
+    - name: "SECRETES"
+      description: "Cell/tissue secretes molecule"
+    - name: "UPTAKES"
+      description: "Cell/tissue uptakes molecule"
+    - name: "STORES"
+      description: "Tissue stores molecule (liver stores glycogen)"
+    - name: "DEGRADES"
+      description: "Enzyme/pathway degrades molecule"
+    - name: "SYNTHESIZES"
+      description: "Enzyme/pathway synthesizes molecule"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # STRUCTURAL & COMPOSITIONAL RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "CONTAINS"
+      description: "Entity contains another (complex contains subunit, pathway contains enzyme)"
+    - name: "COMPOSED_OF"
+      description: "Entity is composed of components"
+    - name: "SUBUNIT_OF"
+      description: "Protein is subunit of complex"
+    - name: "CLEAVES"
+      description: "Protease/enzyme cleaves target protein"
+    - name: "MODIFIES"
+      description: "Post-translational modification (general)"
+    - name: "ACETYLATES"
+      description: "Enzyme acetylates target"
+    - name: "METHYLATES"
+      description: "Enzyme methylates target (DNA or protein)"
+    - name: "UBIQUITINATES"
+      description: "E3 ligase ubiquitinates target for degradation"
+    - name: "GLYCOSYLATES"
+      description: "Enzyme glycosylates target"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
     # DISEASE & CLINICAL RELATIONSHIPS
     # ══════════════════════════════════════════════════════════════════════════════
     - name: "CAUSES"
@@ -565,6 +759,54 @@ graphiti:
       description: "Disease commonly co-occurs with another disease"
     
     # ══════════════════════════════════════════════════════════════════════════════
+    # LONGEVITY & AGING RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "EXTENDS_LIFESPAN"
+      description: "Intervention extends lifespan in model organism"
+    - name: "SHORTENS_LIFESPAN"
+      description: "Factor shortens lifespan"
+    - name: "EXTENDS_HEALTHSPAN"
+      description: "Intervention extends healthspan/functional lifespan"
+    - name: "SLOWS_AGING"
+      description: "Intervention slows aging process"
+    - name: "REVERSES_AGING"
+      description: "Intervention reverses aging markers (epigenetic, cellular)"
+    - name: "GEROPROTECTIVE_FOR"
+      description: "Compound is geroprotective (protects against aging)"
+    - name: "SENOLYTIC_FOR"
+      description: "Compound is senolytic (clears senescent cells)"
+    - name: "SENOSTATIC_FOR"
+      description: "Compound is senostatic (suppresses SASP without killing)"
+    - name: "TARGETS_HALLMARK"
+      description: "Intervention targets aging hallmark"
+      source_types: ["AgingIntervention", "Drug", "Chemical"]
+      target_types: ["AgingHallmark"]
+    - name: "INDUCES_SENESCENCE"
+      description: "Factor induces cellular senescence"
+    - name: "CLEARS_SENESCENT_CELLS"
+      description: "Intervention clears senescent cells"
+    - name: "RESTORES_FUNCTION"
+      description: "Intervention restores youthful function"
+    - name: "IMPROVES_BIOMARKER"
+      description: "Intervention improves aging biomarker"
+    - name: "WORSENS_BIOMARKER"
+      description: "Factor worsens aging biomarker"
+    - name: "REJUVENATES"
+      description: "Intervention rejuvenates tissue/cells (reprogramming, etc.)"
+    - name: "MIMICS_CALORIC_RESTRICTION"
+      description: "Compound mimics caloric restriction effects"
+    - name: "ACTIVATES_AUTOPHAGY"
+      description: "Intervention activates autophagy"
+    - name: "INHIBITS_MTOR"
+      description: "Compound inhibits mTOR pathway"
+    - name: "ACTIVATES_AMPK"
+      description: "Compound activates AMPK pathway"
+    - name: "ACTIVATES_SIRTUINS"
+      description: "Compound activates sirtuin pathway"
+    - name: "BOOSTS_NAD"
+      description: "Compound boosts NAD+ levels"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
     # ANATOMICAL & LOCALIZATION
     # ══════════════════════════════════════════════════════════════════════════════
     - name: "EXPRESSED_IN"
@@ -579,16 +821,16 @@ graphiti:
     # ══════════════════════════════════════════════════════════════════════════════
     # RESEARCH & METHODOLOGY RELATIONSHIPS
     # ══════════════════════════════════════════════════════════════════════════════
-    - name: "MEASURED_BY"
-      description: "Biomarker/phenotype is measured by a method/assay"
-    - name: "DETECTED_BY"
-      description: "Entity is detected by experimental method"
+    - name: "MEASURES"
+      description: "Method/assay measures biomarker/phenotype"
+    - name: "DETECTS"
+      description: "Experimental method detects entity"
     - name: "VALIDATED_IN"
       description: "Finding validated in model system or cohort"
     - name: "DERIVED_FROM"
       description: "Data/result derived from dataset or study"
-    - name: "GENERATED_BY"
-      description: "Data generated by method/pipeline"
+    - name: "GENERATES"
+      description: "Method/pipeline generates data"
     - name: "USES_METHOD"
       description: "Study or experiment uses a specific method"
     - name: "TRAINED_ON"
@@ -608,7 +850,7 @@ graphiti:
       source_types: ["Publication", "ReviewArticle", "Preprint"]
       target_types: ["Publication", "ReviewArticle", "Preprint"]
     - name: "AUTHORED_BY"
-      description: "Publication authored by researcher"
+      description: "Publication authored by person"
       source_types: ["Publication", "ReviewArticle", "Preprint"]
       target_types: ["Author", "Person"]
     - name: "PUBLISHED_IN"
@@ -630,7 +872,49 @@ graphiti:
     - name: "FAILS_TO_REPLICATE"
       description: "Study fails to replicate findings of another study"
     - name: "REVIEWS"
-      description: "Review article reviews a topic or set of publications"
+      description: "Entity reviews another (reviewer reviews paper, panel reviews proposal, review article reviews topic)"
+    - name: "FIRST_AUTHOR_OF"
+      description: "Person is first author of publication"
+      source_types: ["Person", "Author"]
+      target_types: ["Publication", "Preprint"]
+    - name: "LAST_AUTHOR_OF"
+      description: "Person is last/senior author of publication"
+      source_types: ["Person", "Author"]
+      target_types: ["Publication", "Preprint"]
+    - name: "CORRESPONDING_AUTHOR_OF"
+      description: "Person is corresponding author of publication"
+      source_types: ["Person", "Author"]
+      target_types: ["Publication", "Preprint"]
+    - name: "UPDATED_TO"
+      description: "Preprint updated to new version"
+      source_types: ["Preprint"]
+      target_types: ["Preprint", "Publication"]
+    - name: "RETRACTED"
+      description: "Publication was retracted"
+    - name: "CORRECTED"
+      description: "Publication has correction/erratum"
+    - name: "HAS_ABSTRACT"
+      description: "Publication has abstract"
+      target_types: ["Abstract"]
+    - name: "HAS_KEYWORD"
+      description: "Publication has keyword/MeSH term"
+      target_types: ["Keyword"]
+    - name: "HAS_SUPPLEMENTARY"
+      description: "Publication has supplementary material"
+      target_types: ["SupplementaryMaterial"]
+    - name: "HAS_FIGURE"
+      description: "Publication has figure/table"
+      target_types: ["Figure"]
+    - name: "DESCRIBES_METHOD"
+      description: "Publication describes experimental method"
+    - name: "ANALYZES_DATA_FROM"
+      description: "Publication analyzes data from dataset"
+    - name: "AVAILABLE_AT"
+      description: "Publication/data available at URL/repository"
+    - name: "PREPRINT_OF"
+      description: "Preprint is preprint version of published paper"
+      source_types: ["Preprint"]
+      target_types: ["Publication"]
     
     # ══════════════════════════════════════════════════════════════════════════════
     # ARGUMENTATION & REASONING
@@ -731,10 +1015,10 @@ graphiti:
       description: "MCP server exposes tool or resource"
       source_types: ["MCPServer"]
       target_types: ["MCPTool", "MCPResource"]
-    - name: "PROMPTED_BY"
-      description: "Agent behavior prompted by prompt template"
-    - name: "EVALUATED_BY"
-      description: "Model evaluated by benchmark or metric"
+    - name: "PROMPTS"
+      description: "Prompt template prompts agent behavior"
+    - name: "EVALUATES_MODEL"
+      description: "Benchmark or metric evaluates model"
     - name: "OUTPERFORMS"
       description: "Model outperforms another on benchmark"
     
@@ -761,10 +1045,254 @@ graphiti:
       description: "Project funded by agency/grant"
     - name: "MEMBER_OF"
       description: "Person/org is member of collaboration/consortium"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # GRANT WRITING & APPLICATION RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "APPLIES_FOR"
+      description: "Person/org applies for grant program"
+    - name: "PI_OF"
+      description: "Person is Principal Investigator of grant"
+      source_types: ["Person"]
+      target_types: ["GrantProposal", "Project"]
+    - name: "CO_PI_OF"
+      description: "Person is Co-PI or Co-Investigator of grant"
+      source_types: ["Person"]
+      target_types: ["GrantProposal", "Project"]
+    - name: "AFFILIATED_WITH"
+      description: "Person affiliated with institution/organization"
+      source_types: ["Person"]
+      target_types: ["Organization", "Affiliation"]
+    - name: "SUBMITS_TO"
+      description: "Paper/proposal/abstract submitted to agency or conference"
+      source_types: ["GrantProposal"]
+      target_types: ["FundingAgency", "GrantProgram"]
+    - name: "RESPONDS_TO_CALL"
+      description: "Proposal responds to funding call/RFA"
+      source_types: ["GrantProposal"]
+      target_types: ["CallForProposals"]
+    - name: "HAS_DEADLINE"
+      description: "Funding call has submission deadline"
+      target_types: ["Deadline"]
+    - name: "ELIGIBLE_FOR"
+      description: "Person/org eligible for grant program"
+    - name: "INELIGIBLE_FOR"
+      description: "Person/org ineligible for grant program"
+    - name: "INCLUDES_WORK_PACKAGE"
+      description: "Grant includes work package"
+      source_types: ["GrantProposal", "Project"]
+      target_types: ["WorkPackage"]
+    - name: "HAS_DELIVERABLE"
+      description: "Work package has deliverable"
+      source_types: ["WorkPackage"]
+      target_types: ["Deliverable"]
+    - name: "HAS_SPECIFIC_AIM"
+      description: "Proposal has specific aim"
+      source_types: ["GrantProposal"]
+      target_types: ["SpecificAim"]
+      source_types: ["GrantProposal"]
+      target_types: ["StudySection"]
+    - name: "SCORED_AT"
+      description: "Proposal scored at percentile/impact score"
+    - name: "AWARDED_TO"
+      description: "Grant awarded to PI/organization"
+    - name: "NOT_FUNDED"
+      description: "Proposal not funded (rejected)"
+    - name: "RESUBMITTED_AS"
+      description: "Proposal resubmitted as revision (A1, A2)"
+    - name: "SUBCONTRACTS_TO"
+      description: "Grant subcontracts to partner institution"
+      target_types: ["Organization", "Subcontract"]
+    - name: "PROVIDES_LETTER_FOR"
+      description: "Person/org provides letter of support for proposal"
+    - name: "HAS_BUDGET_OF"
+      description: "Proposal has budget amount"
+    - name: "REQUESTS_FUNDING_FOR"
+      description: "Proposal requests funding for item/activity"
+    - name: "CONTRIBUTES_EFFORT_TO"
+      description: "Person contributes % effort to grant"
+    - name: "SUPPORTS_SALARY"
+      description: "Grant supports person's salary"
+      source_types: ["GrantProposal"]
+      target_types: ["Person"]
     - name: "SUPERVISES"
       description: "Person supervises another person"
-    - name: "DECIDED_BY"
-      description: "Decision made by person or meeting"
+    - name: "DECIDES"
+      description: "Person or meeting makes decision"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # STARTUP & BUSINESS RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "INVESTS_IN"
+      description: "Investor invests in startup/company"
+    - name: "FOUNDED_BY"
+      description: "Startup/company founded by person"
+      source_types: ["Startup", "Organization"]
+      target_types: ["Person"]
+    - name: "SPINS_OFF_FROM"
+      description: "Startup spins off from university/company"
+    - name: "PARTNERS_WITH"
+      description: "Organization partners with another organization"
+    - name: "COMPETES_WITH"
+      description: "Company competes with another company"
+    - name: "ACQUIRES"
+      description: "Company acquires another company"
+    - name: "LICENSES"
+      description: "Company licenses IP/technology from another"
+    - name: "DEVELOPS"
+      description: "Organization develops product/technology"
+    - name: "COMMERCIALIZES"
+      description: "Company commercializes research/technology"
+    - name: "ADVISES"
+      description: "Person advises startup/project"
+    - name: "OWNS_IP_FOR"
+      description: "Organization owns IP/patent for technology"
+    - name: "ACHIEVES"
+      description: "Organization achieves milestone"
+    - name: "PIVOTS_TO"
+      description: "Startup pivots to new direction/market"
+    - name: "TARGETS_MARKET"
+      description: "Product/startup targets specific market"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # REGULATORY & CLINICAL TRIAL RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "REGULATED_BY"
+      description: "Product/drug regulated by agency (FDA, EMA)"
+      target_types: ["RegulatoryBody"]
+    - name: "APPROVED_BY"
+      description: "Product approved by regulatory agency"
+      target_types: ["RegulatoryBody"]
+    - name: "REJECTED_BY"
+      description: "Product rejected by regulatory agency"
+      target_types: ["RegulatoryBody"]
+    - name: "CLEARED_VIA"
+      description: "Device cleared via regulatory pathway (510(k), De Novo)"
+    - name: "REQUIRES_APPROVAL_FROM"
+      description: "Product requires approval from regulatory body"
+    - name: "IN_CLINICAL_TRIAL"
+      description: "Drug/device is in clinical trial phase"
+    - name: "COMPLETED_PHASE"
+      description: "Drug completed clinical trial phase"
+    - name: "FAILED_PHASE"
+      description: "Drug failed clinical trial phase"
+    - name: "HAS_ENDPOINT"
+      description: "Clinical trial has primary/secondary endpoint"
+    - name: "MEETS_ENDPOINT"
+      description: "Trial meets its clinical endpoint"
+    - name: "MISSES_ENDPOINT"
+      description: "Trial misses its clinical endpoint"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # GO-TO-MARKET & VALIDATION RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "VALIDATES"
+      description: "Evidence/customer validates product/hypothesis"
+    - name: "SOLVES_PROBLEM"
+      description: "Product solves specific problem"
+    - name: "DIFFERENTIATES_FROM"
+      description: "Product differentiates from competitor"
+    - name: "HAS_ADVANTAGE_OVER"
+      description: "Product has competitive advantage over alternative"
+    - name: "SERVES_SEGMENT"
+      description: "Product serves customer segment"
+    - name: "ESTIMATED_AT"
+      description: "Market estimated at size (TAM/SAM/SOM)"
+    - name: "GROWING_AT"
+      description: "Market growing at rate (CAGR)"
+    - name: "PRICED_AT"
+      description: "Product priced at price point"
+    - name: "GENERATES_REVENUE"
+      description: "Product generates revenue stream"
+    - name: "HAS_BUSINESS_MODEL"
+      description: "Startup has business model"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # FUNDRAISING & INVESTOR RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "PITCHES_TO"
+      description: "Startup pitches to investor"
+    - name: "RAISES_ROUND"
+      description: "Startup raises funding round"
+    - name: "CLOSES_ROUND"
+      description: "Startup closes funding round"
+    - name: "VALUED_AT"
+      description: "Startup valued at valuation"
+    - name: "SETS_TERMS"
+      description: "Term sheet sets investment terms"
+      source_types: ["TermSheet"]
+    - name: "LEADS_ROUND"
+      description: "Lead investor leads funding round"
+      source_types: ["Investor"]
+      target_types: ["FundingRound"]
+    - name: "CONDUCTS_DUE_DILIGENCE"
+      description: "Investor conducts due diligence on startup"
+      source_types: ["Investor"]
+      target_types: ["Startup"]
+    - name: "INTERESTED_IN"
+      description: "Investor interested in startup/space"
+    - name: "PASSED_ON"
+      description: "Investor passed on investment opportunity"
+    - name: "HAS_TRACTION"
+      description: "Startup has traction metric"
+    - name: "DEMONSTRATES"
+      description: "Evidence demonstrates claim"
+    
+    # ══════════════════════════════════════════════════════════════════════════════
+    # EVENTS & CONFERENCES RELATIONSHIPS
+    # ══════════════════════════════════════════════════════════════════════════════
+    - name: "ATTENDS"
+      description: "Person/org attends conference or event"
+    - name: "PRESENTS_AT"
+      description: "Person presents talk/poster at conference"
+      source_types: ["Person", "Organization"]
+      target_types: ["Conference", "Workshop", "Symposium", "Summit"]
+    - name: "ORGANIZES"
+      description: "Person/org organizes event or conference"
+    - name: "CO_ORGANIZES"
+      description: "Person/org co-organizes event with others"
+    - name: "SPEAKS_AT"
+      description: "Person speaks or gives keynote at event"
+    - name: "KEYNOTES_AT"
+      description: "Person gives keynote speech at conference"
+    - name: "CHAIRS"
+      description: "Person chairs/moderates panel or session"
+    - name: "PARTICIPATES_IN_PANEL"
+      description: "Person participates in panel discussion"
+    - name: "EXHIBITS_AT"
+      description: "Company exhibits/has booth at conference"
+      source_types: ["Organization", "Startup"]
+      target_types: ["Conference", "Summit"]
+    - name: "SPONSORS"
+      description: "Organization sponsors event or conference"
+    - name: "HOSTS"
+      description: "Organization hosts event at their venue"
+      source_types: ["Publication", "Presentation", "Poster"]
+      target_types: ["Conference", "Workshop"]
+    - name: "ACCEPTED_AT"
+      description: "Paper/poster accepted at conference"
+    - name: "REJECTED_AT"
+      description: "Paper/poster rejected at conference"
+    - name: "WON_AWARD_AT"
+      description: "Person/org won award at event"
+    - name: "NOMINATED_FOR"
+      description: "Person/org nominated for award"
+    - name: "DEMOED_AT"
+      description: "Product/startup demoed at event"
+      source_types: ["Startup", "Product"]
+      target_types: ["DemoDay", "Conference", "Hackathon"]
+    - name: "COMPETED_IN"
+      description: "Person/team competed in hackathon or competition"
+    - name: "WON_AT"
+      description: "Person/team won competition or hackathon"
+    - name: "NETWORKED_WITH"
+      description: "Met/networked with person at event"
+    - name: "SCHEDULED_FOR"
+      description: "Event scheduled for date/time"
+    - name: "HELD_AT"
+      description: "Event held at location/venue"
+    - name: "COLOCATED_WITH"
+      description: "Event colocated with another event"
     
     # ══════════════════════════════════════════════════════════════════════════════
     # TEMPORAL & CAUSAL RELATIONSHIPS
@@ -794,7 +1322,7 @@ graphiti:
     - name: "DEFINES"
       description: "Term or concept defines another"
     - name: "ADDRESSES"
-      description: "Research/method addresses a knowledge gap or question"
+      description: "Entity addresses gap, question, or need (research addresses knowledge gap, product addresses customer need)"
     
     # ══════════════════════════════════════════════════════════════════════════════
     # PREFERENCE & REQUIREMENT RELATIONSHIPS

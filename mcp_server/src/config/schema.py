@@ -226,7 +226,13 @@ class EdgeTypeConfig(BaseModel):
 class GraphitiAppConfig(BaseModel):
     """Graphiti-specific configuration."""
 
-    group_id: str = Field(default='main', description='Group ID')
+    group_id: str = Field(
+        default='main',
+        description='Unique identifier for the knowledge graph. This acts as a namespace to isolate different graphs.',
+    )
+    default_search_limit: int = Field(
+        default=200, description='Default maximum number of results to return for search operations'
+    )
     episode_id_prefix: str | None = Field(default='', description='Episode ID prefix')
     user_id: str = Field(default='mcp_user', description='User ID')
     entity_types: list[EntityTypeConfig] = Field(default_factory=list)

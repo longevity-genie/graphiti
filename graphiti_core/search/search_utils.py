@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import logging
+import os
 from collections import defaultdict
 from time import time
 from typing import Any
@@ -60,7 +61,7 @@ from graphiti_core.search.search_filters import (
 
 logger = logging.getLogger(__name__)
 
-RELEVANT_SCHEMA_LIMIT = 10
+RELEVANT_SCHEMA_LIMIT = int(os.environ.get('RELEVANT_SCHEMA_LIMIT', 200))
 DEFAULT_MIN_SCORE = 0.6
 DEFAULT_MMR_LAMBDA = 0.5
 MAX_SEARCH_DEPTH = 3
@@ -1978,9 +1979,7 @@ async def get_embeddings_for_communities(
 ) -> dict[str, list[float]]:
     if driver.search_interface:
         try:
-            return await driver.search_interface.get_embeddings_for_communities(
-                driver, communities
-            )
+            return await driver.search_interface.get_embeddings_for_communities(driver, communities)
         except NotImplementedError:
             pass
 

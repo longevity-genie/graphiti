@@ -28,6 +28,19 @@ class NodeSearchResponse(TypedDict):
     nodes: list[NodeResult]
 
 
+class KnowledgeGraphResult(TypedDict):
+    group_id: str
+    entity_count: int
+    episode_count: int
+    last_updated: str | None
+    description: str | None
+
+
+class KnowledgeGraphListResponse(TypedDict):
+    message: str
+    graphs: list[KnowledgeGraphResult]
+
+
 class FactSearchResponse(TypedDict):
     message: str
     facts: list[dict[str, Any]]

@@ -48,7 +48,9 @@ logger = logging.getLogger(__name__)
 
 class Edge(BaseModel, ABC):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
-    group_id: str = Field(description='partition of the graph')
+    group_id: str = Field(
+        description='The unique identifier for the knowledge graph (group ID) this edge belongs to'
+    )
     source_node_uuid: str
     target_node_uuid: str
     created_at: datetime

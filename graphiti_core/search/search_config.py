@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -26,7 +27,7 @@ from graphiti_core.search.search_utils import (
     MAX_SEARCH_DEPTH,
 )
 
-DEFAULT_SEARCH_LIMIT = 10
+DEFAULT_SEARCH_LIMIT = int(os.environ.get('DEFAULT_SEARCH_LIMIT', 200))
 
 
 class EdgeSearchMethod(Enum):
