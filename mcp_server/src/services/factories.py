@@ -237,16 +237,51 @@ class LLMClientFactory:
                     max_tokens=config.max_tokens,
                 )
 
-                # Import types for thinking config
-                from google.genai import types
+                # Configure thinking for Gemini models
+                # - Gemini 3.x: use thinking_level ("minimal", "low", "medium", "high")
+                # - Gemini 2.5: use thinking_budget (0=off, -1=dynamic)
+                # For structured extraction, we want minimal thinking to reduce latency
+                thinking_config = None
+                model_name = config.model.lower()
 
-                # Disable/minimize thinking for Gemini 3+ models used in structured extraction
-                # Gemini 3 models have thinking enabled by default at "high" level
-                # For JSON extraction tasks, "low" is sufficient and reduces token usage/latency
-                # Also prevents thought_signature warnings from spamming logs
-                thinking_config = types.ThinkingConfig(thinking_level='low')
+                try:
+                    from google.genai import types
 
-                return GeminiClient(config=llm_config, thinking_config=thinking_config)
+                    is_gemini_3 = 'gemini-3' in model_name or 'gemini3' in model_name
+                    is_gemini_25 = '2.5' in model_name or '2-5' in model_name
+
+                    if is_gemini_3:
+                        # Gemini 3 models: use thinking_level
+                        # "minimal" is closest to no-thinking for Gemini 3 Flash
+                        try:
+                            thinking_config = types.ThinkingConfig(thinking_level='minimal')
+                            logger.info('Using ThinkingConfig with thinking_level="minimal" for Gemini 3')
+                        except Exception as e:
+                            # Catch all exceptions including pydantic ValidationError
+                            logger.info(f'thinking_level not supported: {e}, trying without ThinkingConfig')
+                            thinking_config = None
+                    elif is_gemini_25:
+                        # Gemini 2.5 models: use thinking_budget=0 to disable
+                        try:
+                            thinking_config = types.ThinkingConfig(thinking_budget=0)
+                            logger.info('Using ThinkingConfig with thinking_budget=0 for Gemini 2.5')
+                        except Exception as e:
+                            # Catch all exceptions including pydantic ValidationError
+                            logger.info(f'thinking_budget not supported: {e}, trying without ThinkingConfig')
+                            thinking_config = None
+                    else:
+                        # Other/older models: no ThinkingConfig needed
+                        logger.info(f'Model {config.model} does not require ThinkingConfig')
+
+                except ImportError:
+                    logger.info('google.genai.types not available, skipping ThinkingConfig')
+                except Exception as e:
+                    logger.warning(f'Error configuring ThinkingConfig: {e}, proceeding without it')
+
+                if thinking_config is not None:
+                    return GeminiClient(config=llm_config, thinking_config=thinking_config)
+                else:
+                    return GeminiClient(config=llm_config)
 
             case 'groq':
                 if not HAS_GROQ:

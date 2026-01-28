@@ -181,10 +181,16 @@ class GraphitiService:
             cross_encoder_client = None
 
             # Create LLM client based on configured provider
+            # This is required - if it fails, we should not continue (otherwise Graphiti
+            # will default to OpenAIClient which requires OPENAI_API_KEY)
             try:
                 llm_client = LLMClientFactory.create(self.config.llm)
             except Exception as e:
-                logger.warning(f'Failed to create LLM client: {e}')
+                logger.error(f'Failed to create LLM client: {e}')
+                raise RuntimeError(
+                    f'Failed to create LLM client for provider "{self.config.llm.provider}": {e}\n'
+                    f'Please check your API key configuration and provider settings.'
+                ) from e
 
             # Create embedder client based on configured provider
             try:
