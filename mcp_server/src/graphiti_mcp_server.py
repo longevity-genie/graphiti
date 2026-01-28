@@ -513,7 +513,8 @@ async def search_nodes(
 
     Args:
         query: The search query
-        group_ids: Optional list of group IDs to filter results
+        group_ids: Optional list of group IDs to filter results. If not provided,
+                  searches across all available groups.
         max_nodes: Maximum number of nodes to return (default: 10)
         entity_types: Optional list of entity type names to filter by
     """
@@ -525,14 +526,23 @@ async def search_nodes(
     try:
         client = await graphiti_service.get_client()
 
-        # Use the provided group_ids or fall back to the default from config if none provided
-        effective_group_ids = (
-            group_ids
-            if group_ids is not None
-            else [config.graphiti.group_id]
-            if config.graphiti.group_id
-            else []
-        )
+        # Determine effective group_ids:
+        # 1. If group_ids explicitly provided, use them
+        # 2. If not provided and config has a default, use the default
+        # 3. If not provided and no default, pass None to search all groups
+        effective_group_ids: list[str] | None
+        if group_ids is not None:
+            # User explicitly provided group_ids (could be empty list)
+            effective_group_ids = group_ids if group_ids else None
+            logger.debug(f'Using user-provided group_ids: {effective_group_ids}')
+        elif config.graphiti.group_id:
+            # Use default group_id from config
+            effective_group_ids = [config.graphiti.group_id]
+            logger.debug(f'Using default group_id from config: {effective_group_ids}')
+        else:
+            # No group_ids provided and no default - search all groups
+            effective_group_ids = None
+            logger.debug('No group_ids specified - searching across all groups')
 
         # Create search filters
         search_filters = SearchFilters(
@@ -553,7 +563,12 @@ async def search_nodes(
         nodes = results.nodes[:max_nodes] if results.nodes else []
 
         if not nodes:
-            return NodeSearchResponse(message='No relevant nodes found', nodes=[])
+            search_scope = (
+                f'in group(s): {", ".join(effective_group_ids)}'
+                if effective_group_ids
+                else 'across all groups'
+            )
+            return NodeSearchResponse(message=f'No relevant nodes found {search_scope}', nodes=[])
 
         # Format the results
         node_results = []
@@ -593,7 +608,8 @@ async def search_memory_facts(
 
     Args:
         query: The search query
-        group_ids: Optional list of group IDs to filter results
+        group_ids: Optional list of group IDs to filter results. If not provided,
+                  searches across all available groups.
         max_facts: Maximum number of facts to return (default: 10)
         center_node_uuid: Optional UUID of a node to center the search around
     """
@@ -609,14 +625,23 @@ async def search_memory_facts(
 
         client = await graphiti_service.get_client()
 
-        # Use the provided group_ids or fall back to the default from config if none provided
-        effective_group_ids = (
-            group_ids
-            if group_ids is not None
-            else [config.graphiti.group_id]
-            if config.graphiti.group_id
-            else []
-        )
+        # Determine effective group_ids:
+        # 1. If group_ids explicitly provided, use them
+        # 2. If not provided and config has a default, use the default
+        # 3. If not provided and no default, pass None to search all groups
+        effective_group_ids: list[str] | None
+        if group_ids is not None:
+            # User explicitly provided group_ids (could be empty list)
+            effective_group_ids = group_ids if group_ids else None
+            logger.debug(f'Using user-provided group_ids: {effective_group_ids}')
+        elif config.graphiti.group_id:
+            # Use default group_id from config
+            effective_group_ids = [config.graphiti.group_id]
+            logger.debug(f'Using default group_id from config: {effective_group_ids}')
+        else:
+            # No group_ids provided and no default - search all groups
+            effective_group_ids = None
+            logger.debug('No group_ids specified - searching across all groups')
 
         relevant_edges = await client.search(
             group_ids=effective_group_ids,
@@ -626,7 +651,12 @@ async def search_memory_facts(
         )
 
         if not relevant_edges:
-            return FactSearchResponse(message='No relevant facts found', facts=[])
+            search_scope = (
+                f'in group(s): {", ".join(effective_group_ids)}'
+                if effective_group_ids
+                else 'across all groups'
+            )
+            return FactSearchResponse(message=f'No relevant facts found {search_scope}', facts=[])
 
         facts = [format_fact_result(edge) for edge in relevant_edges]
         return FactSearchResponse(message='Facts retrieved successfully', facts=facts)
@@ -723,7 +753,8 @@ async def get_episodes(
     """Get episodes from the graph memory.
 
     Args:
-        group_ids: Optional list of group IDs to filter results
+        group_ids: Optional list of group IDs to filter results. If not provided,
+                  retrieves episodes from all available groups.
         max_episodes: Maximum number of episodes to return (default: 10)
     """
     global graphiti_service
@@ -734,29 +765,55 @@ async def get_episodes(
     try:
         client = await graphiti_service.get_client()
 
-        # Use the provided group_ids or fall back to the default from config if none provided
-        effective_group_ids = (
-            group_ids
-            if group_ids is not None
-            else [config.graphiti.group_id]
-            if config.graphiti.group_id
-            else []
-        )
+        # Determine effective group_ids:
+        # 1. If group_ids explicitly provided, use them
+        # 2. If not provided and config has a default, use the default
+        # 3. If not provided and no default, retrieve from all groups
+        effective_group_ids: list[str] | None
+        if group_ids is not None:
+            # User explicitly provided group_ids (could be empty list)
+            effective_group_ids = group_ids if group_ids else None
+            logger.debug(f'Using user-provided group_ids: {effective_group_ids}')
+        elif config.graphiti.group_id:
+            # Use default group_id from config
+            effective_group_ids = [config.graphiti.group_id]
+            logger.debug(f'Using default group_id from config: {effective_group_ids}')
+        else:
+            # No group_ids provided and no default - retrieve from all groups
+            effective_group_ids = None
+            logger.debug('No group_ids specified - retrieving episodes from all groups')
 
         # Get episodes from the driver directly
         from graphiti_core.nodes import EpisodicNode
 
-        if effective_group_ids:
+        if effective_group_ids is not None:
             episodes = await EpisodicNode.get_by_group_ids(
                 client.driver, effective_group_ids, limit=max_episodes
             )
         else:
-            # If no group IDs, we need to use a different approach
-            # For now, return empty list when no group IDs specified
-            episodes = []
+            # Retrieve all episodes across all groups
+            # Note: EpisodicNode.get_by_group_ids doesn't support None, so we query directly
+            records, _, _ = await client.driver.execute_query(
+                """
+                MATCH (e:Episodic)
+                RETURN e
+                ORDER BY e.valid_at DESC, e.created_at DESC
+                LIMIT $limit
+                """,
+                limit=max_episodes,
+                routing_='r',
+            )
+            from graphiti_core.nodes import get_episodic_node_from_record
+
+            episodes = [get_episodic_node_from_record(record) for record in records]
 
         if not episodes:
-            return EpisodeSearchResponse(message='No episodes found', episodes=[])
+            search_scope = (
+                f'in group(s): {", ".join(effective_group_ids)}'
+                if effective_group_ids
+                else 'across all groups'
+            )
+            return EpisodeSearchResponse(message=f'No episodes found {search_scope}', episodes=[])
 
         # Format the results
         episode_results = []
@@ -788,7 +845,9 @@ async def clear_graph(group_ids: list[str] | None = None) -> SuccessResponse | E
     """Clear all data from the graph for specified group IDs.
 
     Args:
-        group_ids: Optional list of group IDs to clear. If not provided, clears the default group.
+        group_ids: Optional list of group IDs to clear. If not provided, clears the default group
+                  from config. If no default is configured, returns an error (to prevent accidentally
+                  clearing all data).
     """
     global graphiti_service
 
@@ -798,13 +857,28 @@ async def clear_graph(group_ids: list[str] | None = None) -> SuccessResponse | E
     try:
         client = await graphiti_service.get_client()
 
-        # Use the provided group_ids or fall back to the default from config if none provided
-        effective_group_ids = (
-            group_ids or [config.graphiti.group_id] if config.graphiti.group_id else []
-        )
-
-        if not effective_group_ids:
-            return ErrorResponse(error='No group IDs specified for clearing')
+        # Determine effective group_ids:
+        # For clear_graph, we require explicit group_ids or a default to prevent accidental data loss
+        effective_group_ids: list[str] | None
+        if group_ids is not None:
+            # User explicitly provided group_ids
+            if not group_ids:
+                return ErrorResponse(
+                    error='Cannot clear graph: empty group_ids list provided. '
+                    'Specify group_ids to clear or omit parameter to use default.'
+                )
+            effective_group_ids = group_ids
+            logger.debug(f'Clearing user-specified group_ids: {effective_group_ids}')
+        elif config.graphiti.group_id:
+            # Use default group_id from config
+            effective_group_ids = [config.graphiti.group_id]
+            logger.debug(f'Clearing default group_id from config: {effective_group_ids}')
+        else:
+            # No group_ids provided and no default - require explicit specification
+            return ErrorResponse(
+                error='Cannot clear graph: no group_ids specified and no default group_id configured. '
+                'Please specify group_ids parameter explicitly to prevent accidental data loss.'
+            )
 
         # Clear data for the specified group IDs
         await clear_data(client.driver, group_ids=effective_group_ids)
