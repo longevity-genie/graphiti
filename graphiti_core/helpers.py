@@ -38,19 +38,18 @@ DEFAULT_PAGE_LIMIT = 20
 
 # Content chunking configuration for entity extraction
 # Density-based chunking: only chunk high-density content (many entities per token)
-# This targets the failure case (large entity-dense inputs) while preserving
-# context for prose/narrative content
-CHUNK_TOKEN_SIZE = int(os.getenv('CHUNK_TOKEN_SIZE', 3000))
+# Lower values = more granular chunks = more edges per node
+# Higher values = larger chunks = more context preserved
+CHUNK_TOKEN_SIZE = int(os.getenv('CHUNK_TOKEN_SIZE', 1000))
 CHUNK_OVERLAP_TOKENS = int(os.getenv('CHUNK_OVERLAP_TOKENS', 200))
 # Minimum tokens before considering chunking - short content processes fine regardless of density
-CHUNK_MIN_TOKENS = int(os.getenv('CHUNK_MIN_TOKENS', 1000))
+CHUNK_MIN_TOKENS = int(os.getenv('CHUNK_MIN_TOKENS', 500))
 # Entity density threshold: chunk if estimated density > this value
-# For JSON: elements per 1000 tokens > threshold * 1000 (e.g., 0.15 = 150 elements/1000 tokens)
-# For Text: capitalized words per 1000 tokens > threshold * 500 (e.g., 0.15 = 75 caps/1000 tokens)
-# Higher values = more conservative (less chunking), targets P95+ density cases
-# Examples that trigger chunking at 0.15: AWS cost data (12mo), bulk data imports, entity-dense JSON
-# Examples that DON'T chunk at 0.15: meeting transcripts, news articles, documentation
-CHUNK_DENSITY_THRESHOLD = float(os.getenv('CHUNK_DENSITY_THRESHOLD', 0.15))
+# For JSON: elements per 1000 tokens > threshold * 1000 (e.g., 0.08 = 80 elements/1000 tokens)
+# For Text: capitalized words per 1000 tokens > threshold * 500 (e.g., 0.08 = 40 caps/1000 tokens)
+# Lower values = more aggressive chunking (good for scientific/technical content)
+# Higher values = more conservative (good for narrative/prose)
+CHUNK_DENSITY_THRESHOLD = float(os.getenv('CHUNK_DENSITY_THRESHOLD', 0.08))
 
 
 def parse_db_date(input_date: neo4j_time.DateTime | str | None) -> datetime | None:
